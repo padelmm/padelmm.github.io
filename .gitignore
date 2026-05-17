@@ -26,6 +26,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Misc
 coverage/
 .cache/
