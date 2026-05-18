@@ -6,6 +6,7 @@ import Ranking from './components/Ranking';
 import History from './components/History';
 import SessionMenu from './components/SessionMenu';
 import Splash from './components/Splash';
+import AppHeader from './components/AppHeader';
 import { introStorage, useSession } from './lib/store';
 
 type Tab = 'play' | 'players' | 'ranking' | 'history' | 'session';
@@ -50,6 +51,7 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col">
+      <AppHeader />
       <main className="flex-1">
         {tab === 'play' && <Play />}
         {tab === 'players' && <Players />}
