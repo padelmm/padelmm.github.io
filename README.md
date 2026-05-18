@@ -3,7 +3,7 @@
 A tiny web app to run a Padel **Mix & Match avond** on one phone.
 Random teams every round, simple 24-point scoring, live ranking.
 
-**Open it:** <https://sedoychel.github.io/>
+**Open it:** <https://padelmm.github.io/>
 
 No account, no install required, no data leaves your phone.
 
