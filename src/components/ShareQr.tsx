@@ -13,8 +13,12 @@ interface Props {
  *
  * QR code constraints: a single byte-mode QR can hold at most ~2,953 bytes
  * with error correction level L. Our compressed share codes are typically
- * 2-2.5 KB plus the app URL prefix (~30 chars), so they fit. If the payload
+ * 2–2.5 KB plus the app URL prefix (~30 chars), so they fit. If the payload
  * is too big, qrcode.toString throws and we render a friendly fallback.
+ *
+ * Layout note: the wrapper uses `inline-block` + `leading-none` and the SVG
+ * is forced to `display: block`. That makes the wrapper shrink-wrap the SVG
+ * exactly, so the white card hugs the QR with no padding mismatch.
  */
 export default function ShareQr({ url, size = 280 }: Props) {
   const [svg, setSvg] = useState<string | null>(null);
@@ -27,7 +31,7 @@ export default function ShareQr({ url, size = 280 }: Props) {
     QRCode.toString(url, {
       type: 'svg',
       errorCorrectionLevel: 'L',
-      margin: 1,
+      margin: 2,
       width: size,
       color: { dark: '#0c1a36', light: '#ffffff' },
     })
@@ -64,18 +68,20 @@ export default function ShareQr({ url, size = 280 }: Props) {
   return (
     <div className="flex flex-col items-center gap-2">
       {/*
-        The SVG is generated locally from data we fully control (a deep-link
-        URL containing our own base64 payload), so dangerouslySetInnerHTML is
-        safe here — there is no user-supplied markup in the source string.
+        Wrapper is inline-block + leading-none so it sizes exactly to the SVG.
+        overflow-hidden + rounded-xl clips the SVG's white background to the
+        rounded card. dangerouslySetInnerHTML is safe here because the SVG is
+        generated locally from data we fully control (a deep-link URL plus our
+        own base64 payload), so there's no user-supplied markup in the source.
       */}
       <div
-        className="rounded-lg bg-white p-2"
-        style={{ width: size, height: size }}
+        className="inline-block overflow-hidden rounded-xl leading-none ring-1 ring-white/15 [&_svg]:block"
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{ __html: svg }}
       />
       <p className="text-center text-[11px] text-slate-400">
-        Scan with the other phone&apos;s camera to auto-import.
+        Scan with the other phone&apos;s camera or with the in-app{' '}
+        <span className="text-slate-300">Scan QR</span> button.
       </p>
     </div>
   );

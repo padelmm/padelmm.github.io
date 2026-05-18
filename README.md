@@ -35,13 +35,20 @@ internet.
 
 ### Taking over from another host
 
-Did the previous host hand you a `PADELMM/...` share code, or scan a QR
-they showed you? On the Setup screen, tap **Import session** at the top,
-paste the code into the box, and tap **Replace current session with
-this**. (If you scanned the QR, the app opens with a confirmation screen
-instead — just tap **Replace & open**.) The app jumps straight to the
-Round view with all players, scores, and ranking already in place — no
-need to add any players manually.
+Did the previous host hand you a `PADELMM/...` share code or a QR code?
+On the Setup screen tap **Import session** at the top. You have three
+ways to bring the session over:
+
+1. **Scan QR with camera** — tap the cyan button, allow camera access
+   once, and point the back camera at the QR shown on the other phone.
+   The session imports automatically the moment the code is recognised.
+2. **Scan with the phone's own camera app** — if the other phone shows
+   the QR on screen, you can also just point your default camera app at
+   it, tap the banner that pops up, and the app opens with a
+   *Replace &amp; open* confirmation screen.
+3. **Paste the code** — works when you got it via chat. Paste the
+   `PADELMM/...` text into the box and tap **Replace current session
+   with this**.
 
 If the previous host sent you multiple messages labelled *part 1 of N*,
 *part 2 of N*, etc., paste them all into the same box (any order, with
@@ -147,10 +154,18 @@ Tools for managing the session itself.
       receiver pastes them all into Import in one go.
     - **Show share code text** — the raw text, in case you want to
       inspect it or paste it manually.
-- **Import session** — paste any combination of share parts into the
-  box and tap **Replace current session with this**. **Warning:** this
-  overwrites whatever is on the current phone. If you're still missing
-  parts, the form will tell you which ones.
+- **Import session** — three ways to receive a session:
+    - **Scan QR with camera** — opens the back camera; point it at the
+      QR on the other phone and the session imports as soon as the code
+      is read.
+    - **Paste a code** — paste any combination of share parts into the
+      text box and tap **Replace current session with this**. The form
+      tolerates extra chat around the code and tells you which parts
+      are still missing if it's incomplete.
+    - **Open a shared link** — if a host sent you a `padelmm.github.io/
+      #import=...` link from the in-app QR, just tapping the link opens
+      the app with a *Replace &amp; open* confirmation.
+  **Warning:** importing overwrites whatever is on the current phone.
 - **Finish session (keeps ranking visible)** — locks the session as
   read-only. You can still browse Ranking and History; just no more
   rounds.
