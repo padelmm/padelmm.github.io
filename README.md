@@ -114,6 +114,16 @@ Scroll through every round of the session in reverse order, with
 timestamps, who rested, and every saved score. The current round is
 highlighted at the top.
 
+Each game row has two small action buttons on the right:
+
+- **✎ Edit** — expands an inline editor with tappable player chips and
+  the score slider. Tap any chip to swap that player with anyone in the
+  session (including players who were resting in that round). Score
+  changes save instantly. Tap **Done** to collapse the editor.
+- **🗑 Delete** — first tap turns the icon into **Sure?** for ~3 s; a
+  second tap removes the game from the round entirely. Useful when a
+  court fell through, or a game was recorded by mistake.
+
 ### ⚙️ Session
 
 Tools for managing the session itself.

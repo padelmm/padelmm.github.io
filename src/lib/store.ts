@@ -24,6 +24,14 @@ export type SwapResult =
   | { ok: true }
   | { ok: false; reason: 'recorded' | 'same' | 'not-found' };
 
+export interface SwapOptions {
+  /** Which round to swap within. Defaults to the current (last) round. */
+  roundId?: string;
+  /** If true, skip the "refuse to swap if any involved game is recorded" guard.
+   * Used by the History tab to retro-fix past games. */
+  allowRecorded?: boolean;
+}
+
 interface SessionActions {
   addPlayer: (name: string) => void;
   renamePlayer: (id: PlayerId, name: string) => void;
@@ -35,7 +43,8 @@ interface SessionActions {
   setScore: (roundId: string, gameId: string, scoreA: number) => void;
   recordGame: (roundId: string, gameId: string) => void;
   unrecordGame: (roundId: string, gameId: string) => void;
-  swapPlayers: (a: PlayerId, b: PlayerId) => SwapResult;
+  swapPlayers: (a: PlayerId, b: PlayerId, opts?: SwapOptions) => SwapResult;
+  deleteGame: (roundId: string, gameId: string) => void;
   adjustBonus: (id: PlayerId, delta: number) => void;
   finishSession: () => void;
   newSession: () => void;
@@ -197,23 +206,36 @@ export const useSession = create<SessionStore>()(
         });
       },
 
-      swapPlayers: (a, b) => {
+      swapPlayers: (a, b, opts) => {
         if (a === b) return { ok: false, reason: 'same' };
         const { rounds } = get();
         if (rounds.length === 0) return { ok: false, reason: 'not-found' };
-        const current = rounds[rounds.length - 1] as Round;
-        const locA = findLocation(current, a);
-        const locB = findLocation(current, b);
-        if (!locA || !locB) return { ok: false, reason: 'not-found' };
-        const involvedGames = new Set<string>();
-        if (locA.kind === 'team') involvedGames.add(locA.gameId);
-        if (locB.kind === 'team') involvedGames.add(locB.gameId);
-        const anyRecorded = current.games.some(
-          (g) => involvedGames.has(g.id) && g.recorded,
-        );
-        if (anyRecorded) return { ok: false, reason: 'recorded' };
 
-        const newGames = current.games.map((g) => {
+        // Resolve which round we're editing. Default = current (last).
+        const targetIndex = opts?.roundId
+          ? rounds.findIndex((r) => r.id === opts.roundId)
+          : rounds.length - 1;
+        if (targetIndex < 0) return { ok: false, reason: 'not-found' };
+        const target = rounds[targetIndex] as Round;
+
+        const locA = findLocation(target, a);
+        const locB = findLocation(target, b);
+        if (!locA || !locB) return { ok: false, reason: 'not-found' };
+
+        // For live-round swaps we refuse to touch games that are already
+        // saved; for History edits the caller explicitly opts in to
+        // mutating recorded games via `allowRecorded`.
+        if (!opts?.allowRecorded) {
+          const involvedGames = new Set<string>();
+          if (locA.kind === 'team') involvedGames.add(locA.gameId);
+          if (locB.kind === 'team') involvedGames.add(locB.gameId);
+          const anyRecorded = target.games.some(
+            (g) => involvedGames.has(g.id) && g.recorded,
+          );
+          if (anyRecorded) return { ok: false, reason: 'recorded' };
+        }
+
+        const newGames = target.games.map((g) => {
           const teamA = g.teamA.playerIds.slice() as [PlayerId, PlayerId];
           const teamB = g.teamB.playerIds.slice() as [PlayerId, PlayerId];
           if (locA.kind === 'team' && locA.gameId === g.id) {
@@ -227,13 +249,23 @@ export const useSession = create<SessionStore>()(
           return { ...g, teamA: { ...g.teamA, playerIds: teamA }, teamB: { ...g.teamB, playerIds: teamB } };
         });
 
-        const newResting = current.restingPlayerIds.slice();
+        const newResting = target.restingPlayerIds.slice();
         if (locA.kind === 'rest') newResting[locA.index] = b;
         if (locB.kind === 'rest') newResting[locB.index] = a;
 
-        const newRound: Round = { ...current, games: newGames, restingPlayerIds: newResting };
-        set({ rounds: [...rounds.slice(0, -1), newRound] });
+        const newRound: Round = { ...target, games: newGames, restingPlayerIds: newResting };
+        const newRounds = rounds.slice();
+        newRounds[targetIndex] = newRound;
+        set({ rounds: newRounds });
         return { ok: true };
+      },
+
+      deleteGame: (roundId, gameId) => {
+        set({
+          rounds: get().rounds.map((r) =>
+            r.id !== roundId ? r : { ...r, games: r.games.filter((g) => g.id !== gameId) },
+          ),
+        });
       },
 
       adjustBonus: (id, delta) => {

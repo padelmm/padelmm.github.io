@@ -7,12 +7,20 @@ interface Props {
   fromPlayerId: PlayerId | null;
   onClose: () => void;
   onSwap: (toPlayerId: PlayerId) => void;
+  /**
+   * Which round's positions to show under each candidate. Defaults to
+   * the current (last) round — used by the Round tab. The History tab
+   * passes a specific round id so the positions match that round.
+   */
+  roundId?: string;
 }
 
-export default function PlayerSwapSheet({ open, fromPlayerId, onClose, onSwap }: Props) {
+export default function PlayerSwapSheet({ open, fromPlayerId, onClose, onSwap, roundId }: Props) {
   const players = useSession((s) => s.players);
   const rounds = useSession((s) => s.rounds);
-  const current = rounds[rounds.length - 1];
+  const current = roundId
+    ? rounds.find((r) => r.id === roundId)
+    : rounds[rounds.length - 1];
 
   useEffect(() => {
     if (!open) return;
