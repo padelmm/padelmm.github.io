@@ -100,13 +100,20 @@ export function generateRound({ players, rounds, config }: GenerateRoundInput): 
   const restingCount = active.length - playingCount;
 
   const rests = countRestsByPlayer(rounds);
-  // Sort by rest count ascending (least-rested first); break ties randomly.
+  // Sort by rest count DESCENDING (most-rested first); break ties randomly.
+  //
+  // Fairness intuition: a player who has already sat out a lot is "owed"
+  // playing time, so they should be in the front of the queue for the
+  // next round's courts. The previous version sorted ascending and then
+  // sliced the front as players, which meant the people who had rested
+  // most kept getting picked to rest again — the exact opposite of fair.
   const orderedByRests = shuffle(active).sort(
-    (a, b) => (rests.get(a.id) ?? 0) - (rests.get(b.id) ?? 0),
+    (a, b) => (rests.get(b.id) ?? 0) - (rests.get(a.id) ?? 0),
   );
 
-  const restingIds = orderedByRests.slice(playingCount).map((p) => p.id);
+  // First `playingCount` players (most-rested) take the courts; the rest sit out.
   const playingIds = orderedByRests.slice(0, playingCount).map((p) => p.id);
+  const restingIds = orderedByRests.slice(playingCount).map((p) => p.id);
 
   const previousPairs = config.avoidImmediateRepeat
     ? partnersInLastRound(rounds[rounds.length - 1])
