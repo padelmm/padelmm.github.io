@@ -13,10 +13,11 @@ export default function Splash({ onContinue }: Props) {
             aria-hidden
             className="absolute inset-0 rounded-full bg-cyan-400/15 blur-3xl"
           />
-          <span
-            role="img"
-            aria-label="Blue Lions logo"
-            className="bl-logo relative h-40 w-40 text-slate-100 drop-shadow-[0_0_24px_rgba(34,211,238,0.4)]"
+          <img
+            src="/bl-logo.png"
+            alt="Blue Lions logo"
+            className="relative h-40 w-40 object-contain drop-shadow-[0_0_24px_rgba(34,211,238,0.4)]"
+            draggable={false}
           />
         </div>
 

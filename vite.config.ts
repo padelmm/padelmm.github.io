@@ -9,7 +9,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['favicon.svg', 'bl-logo.png'],
       manifest: {
         name: 'Padel Mix & Match',
         short_name: 'Padel M&M',
@@ -22,10 +22,16 @@ export default defineConfig({
         scope: '/',
         icons: [
           {
+            src: 'bl-logo.png',
+            sizes: 'any',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
             src: 'favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any maskable',
+            purpose: 'maskable',
           },
         ],
       },

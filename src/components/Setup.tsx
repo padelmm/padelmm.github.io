@@ -27,9 +27,12 @@ export default function Setup() {
   return (
     <div className="flex flex-col gap-5 px-4 pb-32 pt-4">
       <header className="flex items-center gap-3">
-        <span
-          aria-hidden
-          className="bl-logo block h-12 w-12 text-cyan-200/90"
+        <img
+          src="/bl-logo.png"
+          alt=""
+          aria-hidden="true"
+          className="block h-12 w-12 object-contain"
+          draggable={false}
         />
         <div>
           <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-300/80">Blue Lions</p>

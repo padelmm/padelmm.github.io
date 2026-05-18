@@ -155,27 +155,6 @@ input[type='range']::-moz-range-thumb {
   cursor: pointer;
 }
 
-/*
- * Blue Lions logo, rendered as a luminance mask over the original JPEG.
- * Bright pixels (lion + text) stay opaque, dark navy background becomes
- * transparent. The visible color is whatever `currentColor` is, so the
- * logo blends with the surrounding text color or any text-* utility.
- */
-.bl-logo {
-  display: inline-block;
-  background-color: currentColor;
-  -webkit-mask-image: url('/bl-logo.jpeg');
-  mask-image: url('/bl-logo.jpeg');
-  -webkit-mask-mode: luminance;
-  mask-mode: luminance;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-}
-
 /* Bottom sheet animation */
 @keyframes sheet-in {
   from {

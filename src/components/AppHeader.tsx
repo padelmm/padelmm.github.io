@@ -7,9 +7,12 @@
 export default function AppHeader() {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-white/10 bg-bl-navy/85 px-4 py-2 backdrop-blur-md">
-      <span
-        aria-hidden
-        className="bl-logo block h-8 w-8 shrink-0 text-cyan-200/90"
+      <img
+        src="/bl-logo.png"
+        alt=""
+        aria-hidden="true"
+        className="block h-8 w-8 shrink-0 object-contain"
+        draggable={false}
       />
       <div className="min-w-0 leading-tight">
         <p className="text-[9px] uppercase tracking-[0.3em] text-cyan-300/80">
