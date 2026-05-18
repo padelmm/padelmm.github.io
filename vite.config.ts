@@ -30,7 +30,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg}'],
+        globPatterns: ['**/*.{js,css,html,svg,jpeg,jpg,png,webp}'],
         navigateFallback: '/index.html',
       },
     }),

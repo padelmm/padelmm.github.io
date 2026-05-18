@@ -10,6 +10,8 @@ export function computeStats(players: readonly Player[], rounds: readonly Round[
       gamesPlayed: 0,
       pointsScored: 0,
       pointsAgainst: 0,
+      bonus: p.bonus ?? 0,
+      total: p.bonus ?? 0,
       wins: 0,
       losses: 0,
       draws: 0,
@@ -50,6 +52,10 @@ export function computeStats(players: readonly Player[], rounds: readonly Round[
     }
   }
 
+  for (const s of map.values()) {
+    s.total = s.pointsScored + s.bonus;
+  }
+
   return Array.from(map.values());
 }
 
@@ -58,7 +64,7 @@ export function sortByPoints(stats: readonly PlayerStats[]): PlayerStats[] {
     .slice()
     .sort(
       (a, b) =>
-        b.pointsScored - a.pointsScored ||
+        b.total - a.total ||
         b.wins - a.wins ||
         a.pointsAgainst - b.pointsAgainst ||
         a.name.localeCompare(b.name),

@@ -6,6 +6,7 @@ export interface Player {
   id: PlayerId;
   name: string;
   status: PlayerStatus;
+  bonus: number;
 }
 
 export interface Team {
@@ -53,6 +54,8 @@ export interface PlayerStats {
   gamesPlayed: number;
   pointsScored: number;
   pointsAgainst: number;
+  bonus: number;
+  total: number;
   wins: number;
   losses: number;
   draws: number;

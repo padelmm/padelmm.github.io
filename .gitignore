@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Support files
+docs/
+
 # Build output
 dist/
 build/
@@ -23,6 +26,7 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+.cursor/
 *.swp
 *.swo
 

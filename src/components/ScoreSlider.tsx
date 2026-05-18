@@ -18,56 +18,31 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
   const handleSlider = (e: ChangeEvent<HTMLInputElement>) => set(Number(e.target.value));
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col items-center rounded-xl bg-slate-900/70 px-2 py-3 ring-1 ring-court-line">
-          <span className="text-[10px] uppercase tracking-wider text-cyan-300">Team A</span>
-          <span className="font-mono text-5xl font-bold tabular-nums text-cyan-200">{a}</span>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => set(a - 1)}
-              disabled={disabled || a === 0}
-              className="h-10 w-10 rounded-full bg-slate-800 text-2xl font-bold leading-none text-slate-100 ring-1 ring-court-line transition active:scale-95 disabled:opacity-30"
-              aria-label="Decrease team A score"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              onClick={() => set(a + 1)}
-              disabled={disabled || a === target}
-              className="h-10 w-10 rounded-full bg-slate-800 text-2xl font-bold leading-none text-slate-100 ring-1 ring-court-line transition active:scale-95 disabled:opacity-30"
-              aria-label="Increase team A score"
-            >
-              +
-            </button>
-          </div>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => set(a - 1)}
+          disabled={disabled || a === 0}
+          className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+          aria-label="Decrease team A score"
+        >
+          −
+        </button>
+        <div className="flex min-w-0 flex-1 items-baseline justify-center gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
+          <span className="lcd-num text-3xl font-bold text-cyan-300">{a}</span>
+          <span className="text-lg text-slate-500">:</span>
+          <span className="lcd-num lcd-num-gold text-3xl font-bold text-amber-300">{b}</span>
         </div>
-        <div className="flex flex-col items-center rounded-xl bg-slate-900/70 px-2 py-3 ring-1 ring-court-line">
-          <span className="text-[10px] uppercase tracking-wider text-orange-300">Team B</span>
-          <span className="font-mono text-5xl font-bold tabular-nums text-orange-200">{b}</span>
-          <div className="mt-2 flex gap-2">
-            <button
-              type="button"
-              onClick={() => set(a + 1)}
-              disabled={disabled || b === 0}
-              className="h-10 w-10 rounded-full bg-slate-800 text-2xl font-bold leading-none text-slate-100 ring-1 ring-court-line transition active:scale-95 disabled:opacity-30"
-              aria-label="Decrease team B score"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              onClick={() => set(a - 1)}
-              disabled={disabled || b === target}
-              className="h-10 w-10 rounded-full bg-slate-800 text-2xl font-bold leading-none text-slate-100 ring-1 ring-court-line transition active:scale-95 disabled:opacity-30"
-              aria-label="Increase team B score"
-            >
-              +
-            </button>
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={() => set(a + 1)}
+          disabled={disabled || a === target}
+          className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+          aria-label="Increase team A score"
+        >
+          +
+        </button>
       </div>
 
       <div className="px-1">
@@ -82,9 +57,8 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
           className="w-full"
           aria-label="Team A score"
         />
-        <div className="flex justify-between px-1 text-[10px] text-slate-500">
+        <div className="mt-0.5 flex justify-between px-1 text-[9px] uppercase tracking-wider text-slate-500">
           <span>0</span>
-          <span>{Math.floor(target / 2)}</span>
           <span>{target}</span>
         </div>
       </div>

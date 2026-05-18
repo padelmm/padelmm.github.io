@@ -25,15 +25,23 @@ export default function Setup() {
   };
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-32 pt-4">
-      <header>
-        <h1 className="text-2xl font-bold">Padel Mix &amp; Match</h1>
-        <p className="text-sm text-slate-400">
-          Add 4 to 16 players, then start the session.
-        </p>
+    <div className="flex flex-col gap-5 px-4 pb-32 pt-4">
+      <header className="flex items-center gap-3">
+        <img
+          src="/bl-logo.jpeg"
+          alt=""
+          aria-hidden
+          width={40}
+          height={40}
+          className="h-10 w-10 rounded-xl object-contain"
+        />
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-cyan-300/80">Blue Lions</p>
+          <h1 className="text-xl font-bold leading-tight">Mix &amp; Match</h1>
+        </div>
       </header>
 
-      <section className="rounded-2xl bg-court-panel/70 p-4 ring-1 ring-court-line">
+      <section className="glass rounded-2xl p-4">
         <label className="block text-sm font-medium text-slate-300" htmlFor="player-name">
           Add player
         </label>
@@ -51,22 +59,22 @@ export default function Setup() {
             }}
             placeholder="Name"
             maxLength={24}
-            className="min-w-0 flex-1 rounded-xl bg-slate-900 px-4 py-3 text-base text-slate-100 ring-1 ring-court-line placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-base text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/60 focus:outline-none"
           />
           <button
             type="button"
             onClick={submit}
             disabled={!canAdd}
-            className="rounded-xl bg-cyan-500 px-5 py-3 text-base font-semibold text-slate-900 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+            className="rounded-xl bg-cyan-500/90 px-5 py-3 text-base font-semibold text-slate-900 shadow-lcd transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500 disabled:shadow-none"
           >
             Add
           </button>
         </div>
         {duplicate && trimmed.length > 0 && (
-          <p className="mt-2 text-xs text-amber-400">A player with that name is already in the list.</p>
+          <p className="mt-2 text-xs text-amber-300">Name already in the list.</p>
         )}
         {players.length >= 16 && (
-          <p className="mt-2 text-xs text-amber-400">Maximum is 16 players.</p>
+          <p className="mt-2 text-xs text-amber-300">Maximum is 16 players.</p>
         )}
       </section>
 
@@ -74,12 +82,12 @@ export default function Setup() {
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-lg font-semibold">Players</h2>
           <span className="text-xs text-slate-400">
-            {players.length} / 16 ({Math.min(config.maxCourts, Math.floor(players.length / 4))}{' '}
-            courts max)
+            {players.length} / 16 · {Math.min(config.maxCourts, Math.floor(players.length / 4))}{' '}
+            courts
           </span>
         </div>
         {players.length === 0 ? (
-          <p className="rounded-2xl bg-court-panel/40 px-4 py-6 text-center text-sm text-slate-400">
+          <p className="glass rounded-2xl px-4 py-6 text-center text-sm text-slate-400">
             No players yet.
           </p>
         ) : (
@@ -87,9 +95,9 @@ export default function Setup() {
             {players.map((p, i) => (
               <li
                 key={p.id}
-                className="flex items-center gap-2 rounded-2xl bg-court-panel/70 px-3 py-2 ring-1 ring-court-line"
+                className="glass flex items-center gap-2 rounded-2xl px-3 py-2"
               >
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-cyan-500/20 text-sm font-semibold text-cyan-300">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-300">
                   {i + 1}
                 </span>
                 <input
@@ -97,12 +105,12 @@ export default function Setup() {
                   value={p.name}
                   onChange={(e) => renamePlayer(p.id, e.target.value)}
                   maxLength={24}
-                  className="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-1 text-base text-slate-100 focus:bg-slate-900 focus:outline-none"
+                  className="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-1 text-base text-slate-100 focus:bg-black/30 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={() => removePlayer(p.id)}
-                  className="rounded-lg px-3 py-2 text-sm text-rose-300 transition active:scale-95 hover:bg-rose-500/10"
+                  className="rounded-lg px-3 py-2 text-xs text-rose-300 transition active:scale-95 hover:bg-rose-500/10"
                   aria-label={`Remove ${p.name}`}
                 >
                   Remove
@@ -113,12 +121,10 @@ export default function Setup() {
         )}
       </section>
 
-      <section className="rounded-2xl bg-court-panel/70 p-4 ring-1 ring-court-line">
+      <section className="glass rounded-2xl p-4">
         <h2 className="text-sm font-semibold text-slate-300">Settings</h2>
         <label className="mt-3 flex cursor-pointer items-center justify-between gap-3">
-          <span className="text-sm">
-            Avoid pairing the same partners in two consecutive rounds
-          </span>
+          <span className="text-sm">Avoid same partners in consecutive rounds</span>
           <input
             type="checkbox"
             checked={config.avoidImmediateRepeat}
@@ -135,10 +141,10 @@ export default function Setup() {
                 type="button"
                 onClick={() => setConfig({ maxCourts: n })}
                 className={
-                  'h-9 w-10 rounded-lg text-sm font-medium ring-1 transition ' +
+                  'h-9 w-10 rounded-lg text-sm font-medium border transition ' +
                   (config.maxCourts === n
-                    ? 'bg-cyan-500 text-slate-900 ring-cyan-400'
-                    : 'bg-slate-900 text-slate-300 ring-court-line hover:bg-slate-800')
+                    ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
+                    : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
                 }
               >
                 {n}
@@ -148,12 +154,12 @@ export default function Setup() {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-court-line bg-court-bg/95 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-md">
         <button
           type="button"
           disabled={!canStart}
           onClick={startSession}
-          className="w-full rounded-xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-900 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-500"
+          className="w-full rounded-xl bg-emerald-500 px-4 py-4 text-base font-semibold text-slate-900 shadow-lcd-gold transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500 disabled:shadow-none"
         >
           {canStart
             ? `Start session (${players.length} players)`

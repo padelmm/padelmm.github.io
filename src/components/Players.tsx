@@ -21,17 +21,14 @@ export default function Players() {
     <div className="flex flex-col gap-3 px-4 pb-24 pt-4">
       <header>
         <h1 className="text-xl font-bold">Players</h1>
-        <p className="text-sm text-slate-400">
-          Pause someone to skip them in next rounds. Unpause when they return.
+        <p className="text-xs text-slate-400">
+          Pause skips them in upcoming rounds. Unpause when they return.
         </p>
       </header>
 
       <ul className="flex flex-col gap-2">
         {players.map((p) => (
-          <li
-            key={p.id}
-            className="flex flex-col gap-2 rounded-2xl bg-court-panel/70 p-3 ring-1 ring-court-line"
-          >
+          <li key={p.id} className="glass flex flex-col gap-2 rounded-2xl p-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-base font-medium text-slate-100">{p.name}</span>
               <span
@@ -50,10 +47,10 @@ export default function Players() {
                   type="button"
                   onClick={() => setPlayerStatus(p.id, s)}
                   className={
-                    'rounded-lg px-2 py-2 text-xs font-medium ring-1 transition active:scale-95 ' +
+                    'rounded-lg border px-2 py-2 text-xs font-medium transition active:scale-95 ' +
                     (p.status === s
-                      ? 'bg-cyan-500 text-slate-900 ring-cyan-400'
-                      : 'bg-slate-900 text-slate-300 ring-court-line hover:bg-slate-800')
+                      ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
                   }
                 >
                   {statusLabel[s]}
