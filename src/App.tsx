@@ -3,16 +3,18 @@ import Setup from './components/Setup';
 import Play from './components/Play';
 import Players from './components/Players';
 import Ranking from './components/Ranking';
+import History from './components/History';
 import SessionMenu from './components/SessionMenu';
 import Splash from './components/Splash';
 import { introStorage, useSession } from './lib/store';
 
-type Tab = 'play' | 'players' | 'ranking' | 'session';
+type Tab = 'play' | 'players' | 'ranking' | 'history' | 'session';
 
 const tabs: { id: Tab; label: string; emoji: string }[] = [
   { id: 'play', label: 'Round', emoji: '🎾' },
   { id: 'players', label: 'Players', emoji: '👥' },
   { id: 'ranking', label: 'Ranking', emoji: '🏆' },
+  { id: 'history', label: 'History', emoji: '📜' },
   { id: 'session', label: 'Session', emoji: '⚙️' },
 ];
 
@@ -52,6 +54,7 @@ export default function App() {
         {tab === 'play' && <Play />}
         {tab === 'players' && <Players />}
         {tab === 'ranking' && <Ranking />}
+        {tab === 'history' && <History />}
         {tab === 'session' && <SessionMenu />}
       </main>
 
