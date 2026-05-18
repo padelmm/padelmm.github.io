@@ -1,4 +1,5 @@
 import type { ChangeEvent } from 'react';
+import { scoreColor } from '../lib/score-color';
 
 interface Props {
   target: number;
@@ -10,6 +11,8 @@ interface Props {
 export default function ScoreSlider({ target, scoreA, disabled, onChange }: Props) {
   const a = Math.max(0, Math.min(target, Math.round(scoreA)));
   const b = target - a;
+  const colorA = scoreColor(a, target);
+  const colorB = scoreColor(b, target);
 
   const set = (next: number) => {
     if (disabled) return;
@@ -30,9 +33,13 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
           −
         </button>
         <div className="flex min-w-0 flex-1 items-baseline justify-center gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
-          <span className="lcd-num text-3xl font-bold text-cyan-300">{a}</span>
+          <span className="lcd-num text-3xl font-bold" style={{ color: colorA }}>
+            {a}
+          </span>
           <span className="text-lg text-slate-500">:</span>
-          <span className="lcd-num lcd-num-gold text-3xl font-bold text-amber-300">{b}</span>
+          <span className="lcd-num text-3xl font-bold" style={{ color: colorB }}>
+            {b}
+          </span>
         </div>
         <button
           type="button"

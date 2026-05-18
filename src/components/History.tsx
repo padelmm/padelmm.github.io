@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useSession } from '../lib/store';
+import { scoreColor } from '../lib/score-color';
 import type { Player, PlayerId } from '../lib/types';
 
 function nameOf(id: PlayerId, players: readonly Player[]): string {
@@ -13,6 +14,7 @@ function formatTime(ts: number): string {
 export default function History() {
   const players = useSession((s) => s.players);
   const rounds = useSession((s) => s.rounds);
+  const target = useSession((s) => s.config.targetTotal);
 
   // Newest round at the top so the host scrolls back in time as they go down.
   const sorted = useMemo(() => rounds.slice().reverse(), [rounds]);
@@ -115,11 +117,17 @@ export default function History() {
                     <div className="flex shrink-0 items-center gap-1.5">
                       {g.recorded ? (
                         <>
-                          <span className="lcd-num text-lg font-bold text-cyan-200">
+                          <span
+                            className="lcd-num text-lg font-bold"
+                            style={{ color: scoreColor(g.teamA.score, target) }}
+                          >
                             {g.teamA.score}
                           </span>
                           <span className="text-slate-500">:</span>
-                          <span className="lcd-num lcd-num-gold text-lg font-bold text-amber-200">
+                          <span
+                            className="lcd-num text-lg font-bold"
+                            style={{ color: scoreColor(g.teamB.score, target) }}
+                          >
                             {g.teamB.score}
                           </span>
                         </>

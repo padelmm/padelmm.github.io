@@ -62,20 +62,16 @@ textarea {
   font-family: inherit;
 }
 
-/* LCD glow for primary numbers */
+/* LCD glow for primary numbers. The glow inherits the text colour, so
+ * setting `color: hsl(...)` inline lets us tint the digit and its halo
+ * together (used for score digits that follow the slider's gradient). */
 .lcd-num {
   font-family: 'SF Mono', ui-monospace, Menlo, monospace;
   font-variant-numeric: tabular-nums;
   text-shadow:
     0 0 6px currentColor,
-    0 0 14px rgba(34, 211, 238, 0.25);
+    0 0 14px currentColor;
   letter-spacing: 0.02em;
-}
-
-.lcd-num-gold {
-  text-shadow:
-    0 0 6px currentColor,
-    0 0 14px rgba(250, 204, 21, 0.3);
 }
 
 /* Frosted-glass utility */

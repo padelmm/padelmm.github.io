@@ -39,6 +39,7 @@ interface SessionActions {
   adjustBonus: (id: PlayerId, delta: number) => void;
   finishSession: () => void;
   newSession: () => void;
+  clearGames: () => void;
   setConfig: (patch: Partial<SessionState['config']>) => void;
   replaceState: (next: SessionState) => void;
 }
@@ -247,6 +248,18 @@ export const useSession = create<SessionStore>()(
       finishSession: () => set({ status: 'finished' }),
 
       newSession: () => set(defaultState()),
+
+      clearGames: () => {
+        const { players, config } = get();
+        set({
+          ...defaultState(),
+          config,
+          // Keep players but reset their bonus, since "clear games" implies
+          // wiping all gameplay-side data while preserving the roster.
+          players: players.map((p) => ({ ...p, bonus: 0 })),
+          status: 'running',
+        });
+      },
 
       setConfig: (patch) =>
         set({

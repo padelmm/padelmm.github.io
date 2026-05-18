@@ -14,9 +14,11 @@ export default function SessionMenu() {
   }));
   const newSession = useSession((s) => s.newSession);
   const finishSession = useSession((s) => s.finishSession);
+  const clearGames = useSession((s) => s.clearGames);
   const replaceState = useSession((s) => s.replaceState);
 
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const [copied, setCopied] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState('');
@@ -32,6 +34,16 @@ export default function SessionMenu() {
     } else {
       setConfirmReset(true);
       window.setTimeout(() => setConfirmReset(false), 4000);
+    }
+  };
+
+  const onClearGames = () => {
+    if (confirmClear) {
+      clearGames();
+      setConfirmClear(false);
+    } else {
+      setConfirmClear(true);
+      window.setTimeout(() => setConfirmClear(false), 4000);
     }
   };
 
@@ -145,6 +157,21 @@ export default function SessionMenu() {
           Finish session (keeps ranking visible)
         </button>
       )}
+
+      <button
+        type="button"
+        onClick={onClearGames}
+        className={
+          'w-full rounded-2xl px-4 py-4 text-sm font-medium transition active:scale-[0.99] ' +
+          (confirmClear
+            ? 'bg-amber-500 text-slate-900 shadow-lcd-gold'
+            : 'glass text-amber-300')
+        }
+      >
+        {confirmClear
+          ? 'Tap again to confirm — clears games but keeps players'
+          : 'Clear games (keep players)'}
+      </button>
 
       <button
         type="button"
