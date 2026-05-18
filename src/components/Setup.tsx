@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
+import ImportSessionForm from './ImportSessionForm';
 
 export default function Setup() {
   const players = useSession((s) => s.players);
@@ -11,6 +12,7 @@ export default function Setup() {
   const setConfig = useSession((s) => s.setConfig);
 
   const [name, setName] = useState('');
+  const [importOpen, setImportOpen] = useState(false);
   const trimmed = name.trim();
   const duplicate = players.some(
     (p) => p.name.toLowerCase() === trimmed.toLowerCase() && trimmed.length > 0,
@@ -39,6 +41,25 @@ export default function Setup() {
           <h1 className="text-xl font-bold leading-tight">Mix &amp; Match</h1>
         </div>
       </header>
+
+      <section className="glass flex flex-col gap-2 rounded-2xl p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-200">Continuing from another phone?</h2>
+            <p className="text-[11px] text-slate-400">
+              Paste a share code to pick up where the previous host left off.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setImportOpen((v) => !v)}
+            className="shrink-0 rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 transition active:scale-95 hover:bg-white/10"
+          >
+            {importOpen ? 'Cancel' : 'Import session'}
+          </button>
+        </div>
+        {importOpen && <ImportSessionForm />}
+      </section>
 
       <section className="glass rounded-2xl p-4">
         <label className="block text-sm font-medium text-slate-300" htmlFor="player-name">

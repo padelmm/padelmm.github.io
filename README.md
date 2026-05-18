@@ -33,6 +33,14 @@ internet.
    tap **Save score**. When every court is saved, tap **Generate next
    round** and keep going.
 
+### Taking over from another host
+
+Did the previous host hand you a `PADELMM/v1/...` share code? On the Setup
+screen, tap **Import session** at the top, paste the code into the box,
+and tap **Replace current session with this**. The app jumps straight to
+the Round view with all players, scores, and ranking already in place —
+no need to add any players manually.
+
 ---
 
 ## The screens

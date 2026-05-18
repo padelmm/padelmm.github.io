@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
-import { copyToClipboard, exportSession, importSession } from '../lib/share';
+import { copyToClipboard, exportSession } from '../lib/share';
+import ImportSessionForm from './ImportSessionForm';
 
 export default function SessionMenu() {
   const status = useSession((s) => s.status);
@@ -15,16 +16,11 @@ export default function SessionMenu() {
   const newSession = useSession((s) => s.newSession);
   const finishSession = useSession((s) => s.finishSession);
   const clearGames = useSession((s) => s.clearGames);
-  const replaceState = useSession((s) => s.replaceState);
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [copied, setCopied] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
-  const [importText, setImportText] = useState('');
-  const [importMessage, setImportMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(
-    null,
-  );
   const [exportText, setExportText] = useState<string | null>(null);
 
   const onReset = () => {
@@ -55,18 +51,6 @@ export default function SessionMenu() {
     if (ok) window.setTimeout(() => setCopied(false), 2500);
   };
 
-  const onImport = () => {
-    const result = importSession(importText);
-    if (!result.ok || !result.state) {
-      setImportMessage({ kind: 'err', text: result.error ?? 'Import failed.' });
-      return;
-    }
-    replaceState(result.state);
-    setImportMessage({ kind: 'ok', text: 'Session imported.' });
-    setImportText('');
-    setImportOpen(false);
-  };
-
   return (
     <div className="flex flex-col gap-3 px-4 pb-24 pt-4">
       <header>
@@ -89,10 +73,7 @@ export default function SessionMenu() {
           </button>
           <button
             type="button"
-            onClick={() => {
-              setImportOpen((v) => !v);
-              setImportMessage(null);
-            }}
+            onClick={() => setImportOpen((v) => !v)}
             className="flex-1 rounded-xl border border-white/15 bg-white/5 px-3 py-3 text-sm font-medium text-slate-200 transition active:scale-95 hover:bg-white/10"
           >
             {importOpen ? 'Cancel import' : 'Import session'}
@@ -114,38 +95,7 @@ export default function SessionMenu() {
           </details>
         )}
 
-        {importOpen && (
-          <div className="flex flex-col gap-2 rounded-lg border border-white/10 bg-black/30 p-2">
-            <textarea
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              placeholder="Paste a PADELMM/v1/... share code here"
-              rows={3}
-              className="w-full resize-none rounded-md border border-white/10 bg-black/40 p-2 font-mono text-[11px] leading-tight text-slate-100 placeholder:text-slate-500 focus:border-cyan-400/60 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={onImport}
-              disabled={!importText.trim()}
-              className="rounded-lg bg-emerald-500 px-3 py-2 text-xs font-semibold text-slate-900 transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500"
-            >
-              Replace current session with this
-            </button>
-          </div>
-        )}
-
-        {importMessage && (
-          <p
-            className={
-              'rounded-lg px-3 py-2 text-xs ' +
-              (importMessage.kind === 'ok'
-                ? 'bg-emerald-500/10 text-emerald-200 ring-1 ring-emerald-500/30'
-                : 'bg-rose-500/10 text-rose-200 ring-1 ring-rose-500/30')
-            }
-          >
-            {importMessage.text}
-          </p>
-        )}
+        {importOpen && <ImportSessionForm onImported={() => setImportOpen(false)} />}
       </section>
 
       {status === 'running' && (
