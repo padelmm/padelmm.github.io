@@ -35,11 +35,17 @@ internet.
 
 ### Taking over from another host
 
-Did the previous host hand you a `PADELMM/v1/...` share code? On the Setup
-screen, tap **Import session** at the top, paste the code into the box,
-and tap **Replace current session with this**. The app jumps straight to
-the Round view with all players, scores, and ranking already in place —
-no need to add any players manually.
+Did the previous host hand you a `PADELMM/...` share code, or scan a QR
+they showed you? On the Setup screen, tap **Import session** at the top,
+paste the code into the box, and tap **Replace current session with
+this**. (If you scanned the QR, the app opens with a confirmation screen
+instead — just tap **Replace & open**.) The app jumps straight to the
+Round view with all players, scores, and ranking already in place — no
+need to add any players manually.
+
+If the previous host sent you multiple messages labelled *part 1 of N*,
+*part 2 of N*, etc., paste them all into the same box (any order, with
+or without other chat in between) and the app will reassemble them.
 
 ---
 
@@ -128,12 +134,23 @@ Each game row has two small action buttons on the right:
 
 Tools for managing the session itself.
 
-- **Copy session** — generates a `PADELMM/v1/...` text code that captures
-  everything (players, scores, rounds, settings) and copies it to your
-  clipboard. Send it to the next host via any messenger.
-- **Import session** — paste a share code into the box and tap **Replace
-  current session with this**. **Warning:** this overwrites whatever is on
-  the current phone.
+- **Copy session** — captures everything (players, scores, rounds,
+  settings) and copies a compressed `PADELMM/v2/...` code to your
+  clipboard. The Session menu shows three things after you tap it:
+    - **QR code** — when the session fits a single message (almost
+      always), point the next host's phone camera at it and they'll get
+      a one-tap import link.
+    - **Per-part Copy buttons** — when the session is unusually big
+      (very long avond with hundreds of games), the code is split into
+      smaller pieces that each fit in a single chat message. Tap each
+      *Copy part N* button and send those messages one by one. The
+      receiver pastes them all into Import in one go.
+    - **Show share code text** — the raw text, in case you want to
+      inspect it or paste it manually.
+- **Import session** — paste any combination of share parts into the
+  box and tap **Replace current session with this**. **Warning:** this
+  overwrites whatever is on the current phone. If you're still missing
+  parts, the form will tell you which ones.
 - **Finish session (keeps ranking visible)** — locks the session as
   read-only. You can still browse Ranking and History; just no more
   rounds.
