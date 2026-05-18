@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 // jsQR is loaded on demand via a dynamic import in the effect below so the
 // ~45 KB gzipped decoder is only fetched when a host actually opens the
 // scanner. Keeps the initial PWA bundle small.
@@ -183,12 +184,25 @@ export default function QrScanModal({ onResult, onClose }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
+  // Portal the modal directly into `document.body` so that no ancestor's
+  // `transform`, `filter`, `backdrop-filter`, `perspective`, `contain`,
+  // `will-change`, etc. can establish a containing block for our
+  // `position: fixed` overlay. Without this, `.glass` / `backdrop-blur-*`
+  // ancestors squeeze the scanner into a tiny inline box on iOS Safari.
+  if (typeof document === 'undefined') return null;
+  const modal = (
     <div
       role="dialog"
       aria-modal="true"
       aria-label="Scan share QR code"
-      className="fixed inset-0 z-50 bg-black"
+      className="fixed inset-0 z-[100] bg-black"
+      style={{
+        // Belt-and-braces against any ancestor styles affecting layout.
+        width: '100vw',
+        height: '100dvh',
+        top: 0,
+        left: 0,
+      }}
     >
       {/* Camera feed fills the entire viewport. object-cover crops the
           (typically landscape) stream to match a portrait phone viewport
@@ -246,4 +260,6 @@ export default function QrScanModal({ onResult, onClose }: Props) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }
