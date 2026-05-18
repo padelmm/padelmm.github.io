@@ -1,21 +1,22 @@
 /**
- * Map a score in [0, target] to a colour along a red → yellow → cyan
- * gradient. Mirrors the score slider track (red on the left, cyan on
- * the right) so the digit colour reinforces "how high is this score":
- *   0  / 24 → hot red (shut-out / loss side)
+ * Map a score in [0, target] to a colour along a cyan → yellow → red
+ * gradient. Mirrors the score slider track (cyan on the left for low
+ * scores, red on the right for high scores) so the digit colour
+ * reinforces "how big / dominant is this score":
+ *   0  / 24 → cool cyan (low score)
  *   12 / 24 → warm yellow (midpoint, draw)
- *   24 / 24 → cool cyan (max win)
+ *   24 / 24 → hot red (max win)
  */
 export function scoreColor(score: number, target: number): string {
   const safeTarget = target > 0 ? target : 1;
   const clamped = Math.max(0, Math.min(safeTarget, score));
   const t = clamped / safeTarget;
-  // Hue: 0° red → 50° yellow → 190° cyan, with the inflection at t=0.5.
+  // Hue: 190° cyan → 50° yellow → 0° red, with the inflection at t=0.5.
   let hue: number;
   if (t <= 0.5) {
-    hue = 0 + (50 - 0) * (t * 2);
+    hue = 190 - (190 - 50) * (t * 2);
   } else {
-    hue = 50 + (190 - 50) * ((t - 0.5) * 2);
+    hue = 50 - 50 * ((t - 0.5) * 2);
   }
   return `hsl(${hue.toFixed(0)}, 85%, 62%)`;
 }
