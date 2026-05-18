@@ -74,8 +74,11 @@ export default function QrScanModal({ onResult, onClose }: Props) {
           if (ctx) {
             ctx.drawImage(video, 0, 0, cw, ch);
             const imageData = ctx.getImageData(0, 0, cw, ch);
+            // attemptBoth lets us recognise dark-on-light AND light-on-dark
+            // QR codes. Slightly more CPU per frame but much more forgiving
+            // when the camera grabs an under-exposed frame.
             const code = decode(imageData.data, cw, ch, {
-              inversionAttempts: 'dontInvert',
+              inversionAttempts: 'attemptBoth',
             });
             if (code && code.data) {
               decodedRef.current = true;
@@ -109,8 +112,15 @@ export default function QrScanModal({ onResult, onClose }: Props) {
       // prompt. By the time the stream is live, the decoder is usually ready.
       const decoderPromise = import('jsqr').then((m) => m.default);
       try {
+        // Request a reasonably high-resolution stream so QR codes are
+        // detectable from further away. The browser will pick the closest
+        // available resolution; we downscale before decoding anyway.
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -178,55 +188,62 @@ export default function QrScanModal({ onResult, onClose }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label="Scan share QR code"
-      className="fixed inset-0 z-50 flex flex-col bg-black"
+      className="fixed inset-0 z-50 bg-black"
     >
-      <header className="flex items-center justify-between px-4 pb-3 pt-[max(env(safe-area-inset-top),1rem)]">
-        <h2 className="text-sm font-semibold text-slate-100">Scan share QR</h2>
+      {/* Camera feed fills the entire viewport. object-cover crops the
+          (typically landscape) stream to match a portrait phone viewport
+          without leaving any letterbox bars. */}
+      <video
+        ref={videoRef}
+        className="absolute inset-0 h-full w-full object-cover"
+        muted
+        playsInline
+      />
+      <canvas ref={canvasRef} className="hidden" />
+
+      {/* Header overlay — gradient so the camera feed still shows through. */}
+      <header className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/80 via-black/40 to-transparent px-4 pb-6 pt-[max(env(safe-area-inset-top),1rem)]">
+        <h2 className="text-sm font-semibold text-slate-100 drop-shadow">Scan share QR</h2>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium text-slate-100 transition active:scale-95"
+          className="rounded-full border border-white/25 bg-black/40 px-3 py-1 text-xs font-medium text-slate-100 backdrop-blur transition active:scale-95"
         >
           Close
         </button>
       </header>
 
-      <div className="relative flex-1 overflow-hidden bg-black">
-        <video
-          ref={videoRef}
-          className="absolute inset-0 h-full w-full object-cover"
-          muted
-          playsInline
-        />
-        <canvas ref={canvasRef} className="hidden" />
-
-        {/* Viewfinder reticle */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative aspect-square w-3/4 max-w-sm">
-            <div className="absolute inset-0 rounded-2xl border-2 border-cyan-300/80 shadow-[0_0_60px_rgba(34,211,238,0.25)]" />
-            <span className="absolute -left-px -top-px h-8 w-8 rounded-tl-2xl border-l-4 border-t-4 border-cyan-300" />
-            <span className="absolute -right-px -top-px h-8 w-8 rounded-tr-2xl border-r-4 border-t-4 border-cyan-300" />
-            <span className="absolute -bottom-px -left-px h-8 w-8 rounded-bl-2xl border-b-4 border-l-4 border-cyan-300" />
-            <span className="absolute -bottom-px -right-px h-8 w-8 rounded-br-2xl border-b-4 border-r-4 border-cyan-300" />
-          </div>
+      {/* Viewfinder reticle centred over the camera feed. */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <div className="relative aspect-square w-[78vmin] max-w-md">
+          <div className="absolute inset-0 rounded-2xl border-2 border-cyan-300/70 shadow-[0_0_80px_rgba(34,211,238,0.35)]" />
+          <span className="absolute -left-px -top-px h-10 w-10 rounded-tl-2xl border-l-4 border-t-4 border-cyan-300" />
+          <span className="absolute -right-px -top-px h-10 w-10 rounded-tr-2xl border-r-4 border-t-4 border-cyan-300" />
+          <span className="absolute -bottom-px -left-px h-10 w-10 rounded-bl-2xl border-b-4 border-l-4 border-cyan-300" />
+          <span className="absolute -bottom-px -right-px h-10 w-10 rounded-br-2xl border-b-4 border-r-4 border-cyan-300" />
         </div>
-
-        {status.kind === 'starting' && (
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm text-slate-200">
-            Starting camera…
-          </div>
-        )}
-
-        {status.kind === 'error' && (
-          <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 rounded-2xl bg-rose-500/20 p-4 text-center text-sm text-rose-100 ring-1 ring-rose-500/40">
-            {status.message}
-          </div>
-        )}
       </div>
 
-      <p className="bg-black/60 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 text-center text-xs text-slate-300">
+      {/* Status / error overlays. Centered above the reticle so they don't
+          obscure the live feed when scanning is in progress. */}
+      {status.kind === 'starting' && (
+        <div className="pointer-events-none absolute inset-x-0 top-[28%] z-10 text-center">
+          <span className="inline-flex rounded-full bg-black/70 px-4 py-2 text-sm text-slate-100 backdrop-blur">
+            Starting camera…
+          </span>
+        </div>
+      )}
+
+      {status.kind === 'error' && (
+        <div className="absolute inset-x-4 top-[24%] z-10 rounded-2xl bg-rose-500/85 p-4 text-center text-sm text-white shadow-2xl backdrop-blur">
+          {status.message}
+        </div>
+      )}
+
+      {/* Footer hint overlay. */}
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-6 text-center text-xs text-slate-200">
         Aim the camera at the QR code shown on the other phone.
-      </p>
+      </div>
     </div>
   );
 }
