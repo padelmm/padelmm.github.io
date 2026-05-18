@@ -85,25 +85,31 @@ export default function Ranking() {
                 </button>
 
                 {isOpen && (
-                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
-                    <span className="text-xs text-slate-400">Adjust bonus</span>
-                    <div className="flex items-center gap-2">
-                      {[-5, -1, +1, +5].map((delta) => (
-                        <button
-                          key={delta}
-                          type="button"
-                          onClick={() => adjustBonus(s.playerId, delta)}
-                          className={
-                            'h-9 min-w-12 rounded-lg border text-sm font-semibold transition active:scale-95 ' +
-                            (delta < 0
-                              ? 'border-rose-400/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20'
-                              : 'border-emerald-400/30 bg-emerald-500/10 text-emerald-200 hover:bg-emerald-500/20')
-                          }
-                        >
-                          {delta > 0 ? `+${delta}` : delta}
-                        </button>
-                      ))}
+                  <div className="mt-3 flex items-center justify-center gap-5 border-t border-white/10 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => adjustBonus(s.playerId, -1)}
+                      className="grid h-12 w-12 place-items-center rounded-full border border-rose-400/30 bg-rose-500/10 text-2xl font-bold leading-none text-rose-200 transition active:scale-90 hover:bg-rose-500/20"
+                      aria-label={`Subtract one bonus point from ${s.name}`}
+                    >
+                      −
+                    </button>
+                    <div className="min-w-20 text-center">
+                      <div className="text-[10px] uppercase tracking-wider text-slate-400">
+                        bonus
+                      </div>
+                      <div className="lcd-num text-2xl font-bold text-slate-100">
+                        {s.bonus > 0 ? `+${s.bonus}` : s.bonus}
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => adjustBonus(s.playerId, +1)}
+                      className="grid h-12 w-12 place-items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-2xl font-bold leading-none text-emerald-200 transition active:scale-90 hover:bg-emerald-500/20"
+                      aria-label={`Add one bonus point to ${s.name}`}
+                    >
+                      +
+                    </button>
                   </div>
                 )}
               </li>

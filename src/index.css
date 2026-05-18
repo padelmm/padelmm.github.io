@@ -106,7 +106,7 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Range slider styling */
+/* Range slider styling — full rainbow gradient from cyan (cool) to red (hot) */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
@@ -118,10 +118,11 @@ input[type='range']::-webkit-slider-runnable-track {
   border-radius: 9999px;
   background: linear-gradient(
     to right,
-    #22d3ee 0%,
-    #67e8f9 50%,
+    #06b6d4 0%,
+    #22d3ee 25%,
     #facc15 50%,
-    #fbbf24 100%
+    #f97316 75%,
+    #ef4444 100%
   );
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
@@ -140,7 +141,14 @@ input[type='range']::-webkit-slider-thumb {
 input[type='range']::-moz-range-track {
   height: 6px;
   border-radius: 9999px;
-  background: linear-gradient(to right, #22d3ee, #facc15);
+  background: linear-gradient(
+    to right,
+    #06b6d4 0%,
+    #22d3ee 25%,
+    #facc15 50%,
+    #f97316 75%,
+    #ef4444 100%
+  );
 }
 input[type='range']::-moz-range-thumb {
   width: 28px;
@@ -149,6 +157,27 @@ input[type='range']::-moz-range-thumb {
   background: #f8fafc;
   border: 3px solid #0a1428;
   cursor: pointer;
+}
+
+/*
+ * Blue Lions logo, rendered as a luminance mask over the original JPEG.
+ * Bright pixels (lion + text) stay opaque, dark navy background becomes
+ * transparent. The visible color is whatever `currentColor` is, so the
+ * logo blends with the surrounding text color or any text-* utility.
+ */
+.bl-logo {
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-image: url('/bl-logo.jpeg');
+  mask-image: url('/bl-logo.jpeg');
+  -webkit-mask-mode: luminance;
+  mask-mode: luminance;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
 }
 
 /* Bottom sheet animation */

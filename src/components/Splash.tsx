@@ -8,14 +8,15 @@ export default function Splash({ onContinue }: Props) {
       <div className="flex-1" />
 
       <div className="flex w-full max-w-sm flex-col items-center gap-5">
-        <div className="glass-strong relative grid h-40 w-40 place-items-center overflow-hidden rounded-3xl p-3 shadow-glass">
-          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-cyan-400/20 via-transparent to-amber-300/10" />
-          <img
-            src="/bl-logo.jpeg"
-            alt="Blue Lions logo"
-            width={128}
-            height={96}
-            className="h-full w-full rounded-2xl object-contain mix-blend-screen drop-shadow-[0_0_18px_rgba(34,211,238,0.25)]"
+        <div className="relative grid h-44 w-44 place-items-center">
+          <div
+            aria-hidden
+            className="absolute inset-0 rounded-full bg-cyan-400/15 blur-3xl"
+          />
+          <span
+            role="img"
+            aria-label="Blue Lions logo"
+            className="bl-logo relative h-40 w-40 text-slate-100 drop-shadow-[0_0_24px_rgba(34,211,238,0.4)]"
           />
         </div>
 
