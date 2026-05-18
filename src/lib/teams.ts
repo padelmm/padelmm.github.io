@@ -50,7 +50,18 @@ function hasImmediateRepeat(games: readonly Game[], previous: Set<string>): bool
   return false;
 }
 
-function chunkInto(playerIds: readonly PlayerId[], courts: number): Game[] {
+/**
+ * Build Game objects for the round. `initialScore` is the score we give
+ * team A by default; team B's score is derived from `targetTotal - A` at
+ * display time. Initialising both sides to the midpoint (12 of 24) means
+ * a freshly drawn game opens with the slider centered on 12:12 rather
+ * than the lopsided 0:24, which used to confuse hosts.
+ */
+function chunkInto(
+  playerIds: readonly PlayerId[],
+  courts: number,
+  initialScore: number,
+): Game[] {
   const games: Game[] = [];
   for (let c = 0; c < courts; c++) {
     const slice = playerIds.slice(c * 4, c * 4 + 4);
@@ -59,8 +70,8 @@ function chunkInto(playerIds: readonly PlayerId[], courts: number): Game[] {
     games.push({
       id: newId(),
       court: c + 1,
-      teamA: { playerIds: [a, b], score: 0 },
-      teamB: { playerIds: [x, y], score: 0 },
+      teamA: { playerIds: [a, b], score: initialScore },
+      teamB: { playerIds: [x, y], score: initialScore },
       recorded: false,
     });
   }
@@ -101,10 +112,12 @@ export function generateRound({ players, rounds, config }: GenerateRoundInput): 
     ? partnersInLastRound(rounds[rounds.length - 1])
     : new Set<string>();
 
-  let games: Game[] = chunkInto(shuffle(playingIds), courts);
+  const initialScore = Math.floor(config.targetTotal / 2);
+
+  let games: Game[] = chunkInto(shuffle(playingIds), courts, initialScore);
   if (config.avoidImmediateRepeat) {
     for (let attempt = 0; attempt < 30 && hasImmediateRepeat(games, previousPairs); attempt++) {
-      games = chunkInto(shuffle(playingIds), courts);
+      games = chunkInto(shuffle(playingIds), courts, initialScore);
     }
   }
 

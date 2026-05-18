@@ -68,7 +68,7 @@ This is where you play.
 #### Entering scores
 
 Each court shows a compact `A : B` scorebar. The two numbers always add up
-to 24.
+to 24, and a fresh game opens at **12 : 12** with the slider centered.
 
 - **Slide** to set the score, or use the **− / +** buttons for fine
   adjustments.
@@ -132,6 +132,9 @@ Tools for managing the session itself.
   same group. Tap twice to confirm.
 - **New mix & match (clear data)** — wipes everything and goes back to
   the Setup screen. Tap twice to confirm.
+- **About** — re-opens the Blue Lions welcome panel (logo, name, version).
+  Useful when handing the phone to someone for the first time, or just to
+  re-check the app version.
 
 ---
 

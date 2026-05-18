@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSession } from '../lib/store';
 import { copyToClipboard, exportSession } from '../lib/share';
 import ImportSessionForm from './ImportSessionForm';
+import Splash from './Splash';
 
 export default function SessionMenu() {
   const status = useSession((s) => s.status);
@@ -22,6 +23,7 @@ export default function SessionMenu() {
   const [copied, setCopied] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [exportText, setExportText] = useState<string | null>(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
 
   const onReset = () => {
     if (confirmReset) {
@@ -140,6 +142,27 @@ export default function SessionMenu() {
         Everything is stored only on this phone. Nothing is uploaded. Use Share above to
         hand off mid-session.
       </p>
+
+      <button
+        type="button"
+        onClick={() => setAboutOpen(true)}
+        className="glass w-full rounded-2xl px-4 py-3 text-sm font-medium text-slate-200 transition active:scale-[0.99]"
+      >
+        About
+      </button>
+
+      {aboutOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="About Blue Lions Mix & Match"
+          className="fixed inset-0 z-50 overflow-y-auto bg-bl-navy/95 backdrop-blur-md"
+        >
+          <div className="mx-auto max-w-md">
+            <Splash buttonLabel="Close" onContinue={() => setAboutOpen(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

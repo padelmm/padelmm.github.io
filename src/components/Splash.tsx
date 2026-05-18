@@ -1,8 +1,14 @@
 interface Props {
   onContinue: () => void;
+  /**
+   * Label for the primary dismiss button. Defaults to "Tap to start"
+   * for the welcome flow; pass e.g. "Close" when reusing this view
+   * as an About panel.
+   */
+  buttonLabel?: string;
 }
 
-export default function Splash({ onContinue }: Props) {
+export default function Splash({ onContinue, buttonLabel = 'Tap to start' }: Props) {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 py-10">
       <div className="flex-1" />
@@ -40,7 +46,7 @@ export default function Splash({ onContinue }: Props) {
           onClick={onContinue}
           className="glass-strong w-full rounded-2xl px-6 py-4 text-base font-semibold tracking-wide text-cyan-200 shadow-lcd transition active:scale-[0.98]"
         >
-          Tap to start
+          {buttonLabel}
         </button>
         <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-slate-500">
           v0.1 · offline-first · no accounts
