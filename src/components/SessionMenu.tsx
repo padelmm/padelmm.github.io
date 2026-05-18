@@ -3,7 +3,6 @@ import { useSession } from '../lib/store';
 import { copyToClipboard, exportSession, type ExportResult } from '../lib/share';
 import ImportSessionForm from './ImportSessionForm';
 import Splash from './Splash';
-import ShareQr from './ShareQr';
 
 export default function SessionMenu() {
   const status = useSession((s) => s.status);
@@ -24,7 +23,6 @@ export default function SessionMenu() {
   const [copied, setCopied] = useState<'none' | 'all' | number>('none');
   const [importOpen, setImportOpen] = useState(false);
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
-  const [showQr, setShowQr] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -58,8 +56,7 @@ export default function SessionMenu() {
       const ok = await copyToClipboard(result.full);
       setCopied(ok ? 'all' : 'none');
       if (ok) window.setTimeout(() => setCopied('none'), 2500);
-      // Open QR by default when it fits a single QR; collapse the long text otherwise.
-      setShowQr(result.isSingle);
+      // For multi-chunk codes, expand the text so the user can see what to send.
       setShowCode(!result.isSingle);
     } finally {
       setBusy(false);
@@ -74,11 +71,6 @@ export default function SessionMenu() {
     }
   };
 
-  const qrUrl =
-    exportResult && exportResult.isSingle
-      ? `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}#import=${exportResult.singleCode}`
-      : null;
-
   return (
     <div className="flex flex-col gap-3 px-4 pb-24 pt-4">
       <header>
@@ -89,8 +81,8 @@ export default function SessionMenu() {
       <section className="glass flex flex-col gap-2 rounded-2xl p-3">
         <h2 className="text-[10px] uppercase tracking-[0.2em] text-slate-400">Share</h2>
         <p className="text-xs text-slate-400">
-          Hand off the session to another phone: scan the QR code, or copy &amp; paste the
-          text into Import on the other phone.
+          Hand off the session to another phone: copy the text and paste it into
+          Import on the other phone.
         </p>
         <div className="flex gap-2">
           <button
@@ -117,21 +109,6 @@ export default function SessionMenu() {
                 ? `Fits in one message (${exportResult.chars.toLocaleString()} chars).`
                 : `Too big for one message — split into ${exportResult.chunks.length} parts (${exportResult.chars.toLocaleString()} chars total). Send all parts.`}
             </p>
-
-            {exportResult.isSingle && qrUrl && (
-              <details
-                className="rounded-lg border border-white/10 bg-black/30 px-3 py-2"
-                open={showQr}
-                onToggle={(e) => setShowQr((e.target as HTMLDetailsElement).open)}
-              >
-                <summary className="cursor-pointer text-xs text-slate-300">
-                  QR code (scan with the other phone)
-                </summary>
-                <div className="pt-2">
-                  <ShareQr url={qrUrl} />
-                </div>
-              </details>
-            )}
 
             {!exportResult.isSingle && (
               <div className="flex flex-col gap-1.5">

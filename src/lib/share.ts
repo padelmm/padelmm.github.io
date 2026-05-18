@@ -92,13 +92,8 @@ export interface ExportResult {
   chunks: string[];
   /** Total character count across all chunks (excluding separators). */
   chars: number;
-  /** True when the payload fits a single message (and is therefore QR-able). */
+  /** True when the payload fits a single message. */
   isSingle: boolean;
-  /**
-   * Single-message form (always set, even when the payload would not fit a
-   * single message — handy for in-app diagnostics and QR scaling decisions).
-   */
-  singleCode: string;
 }
 
 export async function exportSession(state: SessionState): Promise<ExportResult> {
@@ -118,7 +113,6 @@ export async function exportSession(state: SessionState): Promise<ExportResult> 
       chunks: [singleCode],
       chars: singleCode.length,
       isSingle: true,
-      singleCode,
     };
   }
 
@@ -144,7 +138,6 @@ export async function exportSession(state: SessionState): Promise<ExportResult> 
     chunks,
     chars: chunks.reduce((s, c) => s + c.length, 0),
     isSingle: false,
-    singleCode,
   };
 }
 
