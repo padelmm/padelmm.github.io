@@ -27,7 +27,7 @@ export default function Setup() {
   };
 
   return (
-    <div className="flex flex-col gap-5 px-4 pb-32 pt-4">
+    <div className="flex flex-col gap-5 px-4 pb-32 pt-[max(env(safe-area-inset-top),1rem)]">
       <header className="flex items-center gap-3">
         <img
           src="/bl-logo.png"

@@ -10,7 +10,7 @@ interface Props {
 
 export default function Splash({ onContinue, buttonLabel = 'Tap to start' }: Props) {
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 py-10">
+    <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 pb-10 pt-[max(env(safe-area-inset-top),2.5rem)]">
       <div className="flex-1" />
 
       <div className="flex w-full max-w-sm flex-col items-center gap-5">
