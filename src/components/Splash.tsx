@@ -1,3 +1,22 @@
+/**
+ * Direct deep-link to the Feedback issue template. Kept here (not in
+ * env or remote config) on purpose: this is a public OSS repo, the URL
+ * is not a secret, and hardcoding it keeps the app fully offline-first
+ * with no runtime config lookup.
+ *
+ * Security notes for reviewers:
+ *  - Opened with `target="_blank" rel="noopener noreferrer"` so the
+ *    issue page cannot reach back into the app via `window.opener` and
+ *    no Referer header leaks the in-app path.
+ *  - Anti-spam is delegated to GitHub: a logged-in account is required
+ *    to file the issue, so we do not need a captcha, rate-limit, or
+ *    backend of our own.
+ *  - No PII (player names, session contents, share codes) is ever
+ *    appended to this URL.
+ */
+const FEEDBACK_URL =
+  'https://github.com/padelmm/padelmm.github.io/issues/new?template=feedback.yml';
+
 interface Props {
   onContinue: () => void;
   /**
@@ -6,9 +25,19 @@ interface Props {
    * as an About panel.
    */
   buttonLabel?: string;
+  /**
+   * Show a "Send feedback" link beneath the version line. Enabled when
+   * this view is reused as the About panel; off for the first-run
+   * welcome flow where it would be premature.
+   */
+  showFeedback?: boolean;
 }
 
-export default function Splash({ onContinue, buttonLabel = 'Tap to start' }: Props) {
+export default function Splash({
+  onContinue,
+  buttonLabel = 'Tap to start',
+  showFeedback = false,
+}: Props) {
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 pb-10 pt-[max(env(safe-area-inset-top),2.5rem)]">
       <div className="flex-1" />
@@ -51,6 +80,22 @@ export default function Splash({ onContinue, buttonLabel = 'Tap to start' }: Pro
         <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-slate-500">
           v0.1 · offline-first · no accounts
         </p>
+
+        {showFeedback && (
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <a
+              href={FEEDBACK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 transition active:scale-[0.97] hover:bg-cyan-500/15"
+            >
+              Send feedback
+            </a>
+            <span className="px-2 text-center text-[10px] uppercase tracking-widest text-slate-500">
+              opens a public GitHub issue · please don't include personal info
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

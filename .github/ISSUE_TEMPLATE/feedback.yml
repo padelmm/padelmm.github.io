@@ -1,0 +1,64 @@
+name: Feedback
+description: Bug report, idea, or general feedback for Blue Lions Mix & Match.
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to send feedback!
+
+        **Heads up — this is a public GitHub issue.** Please don't include
+        personal information about other players, phone numbers, addresses,
+        or anything else you wouldn't put on a public noticeboard.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      description: What sort of feedback is this?
+      options:
+        - Bug — something broke or behaves wrong
+        - Idea — feature request or improvement
+        - Question — how does X work?
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened / what would you like?
+      description: Describe what you saw, what you expected, or what you'd like to see added.
+      placeholder: |
+        Example: After importing a session, the ranking shows everyone at 0 points until I tap the Ranking tab again.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce (only for bugs)
+      description: If this is a bug, the smallest set of steps that triggers it.
+      placeholder: |
+        1. Open the app
+        2. ...
+        3. ...
+    validations:
+      required: false
+
+  - type: input
+    id: device
+    attributes:
+      label: Phone / browser (optional)
+      placeholder: e.g. iPhone 17, Safari (installed as PWA)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I understand this issue is public and have not included anyone's personal info.
+          required: true

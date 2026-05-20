@@ -241,7 +241,11 @@ export default function SessionMenu() {
           className="fixed inset-0 z-50 overflow-y-auto bg-bl-navy/95 backdrop-blur-md"
         >
           <div className="mx-auto max-w-md">
-            <Splash buttonLabel="Close" onContinue={() => setAboutOpen(false)} />
+            <Splash
+              buttonLabel="Close"
+              onContinue={() => setAboutOpen(false)}
+              showFeedback
+            />
           </div>
         </div>
       )}

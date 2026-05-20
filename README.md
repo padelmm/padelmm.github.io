@@ -223,7 +223,11 @@ Tools for managing the session itself.
   to be fetched and activated. Players, scores, rounds, and settings are
   kept (they live in browser storage, not in the JS bundle). Useful when
   a new feature has been released and you want it right now.
-- **About** — re-opens the Blue Lions welcome panel (logo, name, version).
+- **About** — re-opens the Blue Lions welcome panel (logo, name,
+  version) and exposes a **Send feedback** button that opens a public
+  GitHub issue. Filing requires a GitHub account (this is what keeps
+  spam out — no captcha or backend involved). Please don't include
+  player names or other personal info in the issue.
   Useful when handing the phone to someone for the first time, or just to
   re-check the app version.
 
