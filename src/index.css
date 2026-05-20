@@ -102,57 +102,101 @@ textarea {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Range slider styling — full rainbow gradient from cyan (cool) to red (hot) */
-input[type='range'] {
+/* Range slider styling.
+ *
+ * The track gradient is symmetric: red at both ends, cyan in the middle.
+ * That way the colour at the thumb position reflects how *lopsided* the
+ * score is, not which team is on top:
+ *   slider at 0  (0:24)  → thumb over red    (blowout)
+ *   slider at 12 (12:12) → thumb over cyan   (balanced)
+ *   slider at 24 (24:0)  → thumb over red    (blowout)
+ *
+ * `in oklch` interpolation keeps the colours vivid through the centre
+ * crossover instead of muddying through grey.
+ *
+ * The thumb itself reads a `--score-thumb-color` CSS variable that
+ * `ScoreSlider.tsx` sets in JS to match the current slider position on
+ * the same gradient — so as you drag, the thumb's glow and fill morph
+ * from cyan (centre) to red (edge).
+ */
+.score-slider {
+  --score-thumb-color: #22d3ee;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
   width: 100%;
 }
-input[type='range']::-webkit-slider-runnable-track {
+.score-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 9999px;
   background: linear-gradient(
-    to right,
-    #06b6d4 0%,
-    #22d3ee 25%,
-    #facc15 50%,
-    #f97316 75%,
-    #ef4444 100%
+    to right in oklch,
+    hsl(0, 85%, 62%) 0%,
+    hsl(25, 85%, 62%) 18%,
+    hsl(50, 85%, 62%) 32%,
+    hsl(190, 85%, 62%) 50%,
+    hsl(50, 85%, 62%) 68%,
+    hsl(25, 85%, 62%) 82%,
+    hsl(0, 85%, 62%) 100%
   );
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
-input[type='range']::-webkit-slider-thumb {
+.score-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 28px;
   height: 28px;
   margin-top: -11px;
   border-radius: 9999px;
-  background: #f8fafc;
+  background:
+    radial-gradient(
+      circle at center,
+      #ffffff 35%,
+      var(--score-thumb-color) 100%
+    );
   border: 3px solid #0a1428;
-  box-shadow: 0 0 12px rgba(34, 211, 238, 0.6);
+  box-shadow:
+    0 0 14px 2px var(--score-thumb-color),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
   cursor: pointer;
+  transition:
+    box-shadow 120ms ease-out,
+    background 120ms ease-out;
 }
-input[type='range']::-moz-range-track {
+.score-slider::-moz-range-track {
   height: 6px;
   border-radius: 9999px;
   background: linear-gradient(
-    to right,
-    #06b6d4 0%,
-    #22d3ee 25%,
-    #facc15 50%,
-    #f97316 75%,
-    #ef4444 100%
+    to right in oklch,
+    hsl(0, 85%, 62%) 0%,
+    hsl(25, 85%, 62%) 18%,
+    hsl(50, 85%, 62%) 32%,
+    hsl(190, 85%, 62%) 50%,
+    hsl(50, 85%, 62%) 68%,
+    hsl(25, 85%, 62%) 82%,
+    hsl(0, 85%, 62%) 100%
   );
 }
-input[type='range']::-moz-range-thumb {
+.score-slider::-moz-range-thumb {
   width: 28px;
   height: 28px;
   border-radius: 9999px;
-  background: #f8fafc;
+  background:
+    radial-gradient(
+      circle at center,
+      #ffffff 35%,
+      var(--score-thumb-color) 100%
+    );
   border: 3px solid #0a1428;
+  box-shadow: 0 0 14px 2px var(--score-thumb-color);
   cursor: pointer;
+  transition:
+    box-shadow 120ms ease-out,
+    background 120ms ease-out;
+}
+.score-slider:disabled::-webkit-slider-thumb,
+.score-slider:disabled::-moz-range-thumb {
+  opacity: 0.55;
 }
 
 /* Bottom sheet animation */

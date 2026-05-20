@@ -1,5 +1,5 @@
-import type { ChangeEvent } from 'react';
-import { scoreColor } from '../lib/score-color';
+import type { ChangeEvent, CSSProperties } from 'react';
+import { intensityColor, scoreColor } from '../lib/score-color';
 
 interface Props {
   target: number;
@@ -13,6 +13,10 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
   const b = target - a;
   const colorA = scoreColor(a, target);
   const colorB = scoreColor(b, target);
+  // Drives the slider thumb glow (and tint) so it morphs from cyan (balanced)
+  // to red (blowout) as the host slides away from the centre.
+  const thumbColor = intensityColor(a, target);
+  const sliderStyle = { '--score-thumb-color': thumbColor } as CSSProperties;
 
   const set = (next: number) => {
     if (disabled) return;
@@ -61,7 +65,8 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
           value={a}
           onChange={handleSlider}
           disabled={disabled}
-          className="w-full"
+          style={sliderStyle}
+          className="score-slider w-full"
           aria-label="Team A score"
         />
         <div className="mt-0.5 flex justify-between px-1 text-[9px] uppercase tracking-wider text-slate-500">
