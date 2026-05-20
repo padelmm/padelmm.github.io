@@ -1,10 +1,13 @@
 import { useEffect, useMemo } from 'react';
 import { useSession } from '../lib/store';
+import type { RankingMode } from '../lib/ranking-mode';
 import { previewFinalRound } from '../lib/teams';
 import type { Player, PlayerId } from '../lib/types';
 
 interface Props {
   open: boolean;
+  /** Seeding mode — must match what the Ranking screen is showing. */
+  mode: RankingMode;
   onClose: () => void;
   onConfirm: () => void;
 }
@@ -19,14 +22,14 @@ function nameOf(id: PlayerId, players: readonly Player[]): string {
  * eyeball them before committing. Hitting "Start final" calls back into
  * the store to actually generate and append the round.
  */
-export default function FinalRoundSheet({ open, onClose, onConfirm }: Props) {
+export default function FinalRoundSheet({ open, mode, onClose, onConfirm }: Props) {
   const players = useSession((s) => s.players);
   const rounds = useSession((s) => s.rounds);
   const config = useSession((s) => s.config);
 
   const preview = useMemo(
-    () => (open ? previewFinalRound({ players, rounds, config }) : null),
-    [open, players, rounds, config],
+    () => (open ? previewFinalRound({ players, rounds, config }, mode) : null),
+    [open, players, rounds, config, mode],
   );
 
   useEffect(() => {
@@ -73,8 +76,9 @@ export default function FinalRoundSheet({ open, onClose, onConfirm }: Props) {
         {preview ? (
           <>
             <p className="mb-3 text-[11px] text-slate-400">
-              Top {preview.needed} of {preview.totalActive} active players, paired by
-              ranking. Court 1 is the strongest court.
+              Top {preview.needed} of {preview.totalActive} active players, seeded by{' '}
+              <span className="text-slate-200">{mode === 'wins' ? 'wins' : 'points'}</span>.
+              Court 1 is the strongest court.
             </p>
 
             <ol className="mb-4 max-h-[55vh] space-y-2 overflow-y-auto pr-1">

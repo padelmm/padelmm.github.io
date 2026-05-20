@@ -116,17 +116,25 @@ Toggle status back to **Active** at any time to bring someone back in.
 
 ### 🏆 Ranking
 
-Always-on leaderboard, sorted by total points.
+Always-on leaderboard. A pill toggle at the top right lets you switch
+between two ranking modes on the fly — the list re-sorts immediately:
 
-- The big number is **total points** = sum of game scores + any bonus you
-  awarded.
-- Tap a player row to expand it and use **−1 / +1** buttons to add or
-  subtract **bonus points** manually. Useful for "best dressed," lateness
-  penalties, or settling a disputed point.
+- **Points** *(default)* — the big number is **total points** (sum of
+  game scores + bonus). Ties break by wins, then points-against, then
+  games played, then name. Best for averaging out partner-luck across
+  many rounds.
+- **Wins** — the big number is the **win count**. Ties break by total
+  points, then points-against, then games played, then name. Best when
+  you want to celebrate decisive results.
 
-Ties are broken in this order: total points → wins → points-against
-(lower is better) → games played (fewer is better, i.e. higher points
-per game) → name.
+The choice is per-phone (stored locally) and survives session imports,
+so each host can read the standings the way they prefer. The mode you
+pick also seeds the **Start final round** preview, so the leaderboard
+and the final draw always agree.
+
+Tap a player row to expand it and use **−1 / +1** buttons to add or
+subtract **bonus points** manually. Useful for "best dressed," lateness
+penalties, or settling a disputed point.
 
 #### Start final round
 
@@ -138,8 +146,9 @@ the matches before committing.
 How the final is seeded:
 
 - **Who plays.** The top `4 × Max courts` active players (so 12 with 3
-  courts, 8 with 2, 4 with 1). The rest sit out for the round; their
-  ranking and points are untouched.
+  courts, 8 with 2, 4 with 1) according to the ranking mode the host
+  has selected. The rest sit out for the round; their ranking and
+  points are untouched.
 - **Which court.** Strongest 4 share **Court 1** (the championship
   court), the next 4 share Court 2, and so on.
 - **Which side.** Within each court the top and bottom seed pair up
@@ -147,6 +156,9 @@ How the final is seeded:
   `(rank 2 + rank 3)`, on Court 2 `(rank 5 + rank 8)` vs
   `(rank 6 + rank 7)`, and so on. That keeps each two-on-two match
   evenly weighted.
+- **Mode follows the leaderboard.** Whichever pill (Points or Wins) is
+  active on the Ranking screen is the one used to seed the final. Flip
+  the toggle to re-roll the seeding preview before you confirm.
 
 After you confirm, the final lands as a new round with a gold accent and
 a **FINAL** badge — visible on the Round tab while you play it and in

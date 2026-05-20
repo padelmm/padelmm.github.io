@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
 import type { Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
 
@@ -153,7 +154,10 @@ export const useSession = create<SessionStore>()(
             message: 'Play (and save) at least one game so a ranking exists.',
           };
         }
-        const result = generateFinalRound({ players, rounds, config });
+        const result = generateFinalRound(
+          { players, rounds, config },
+          rankingModeStorage.get(),
+        );
         if (!result.round) return { ok: false, message: result.message };
         set({ rounds: [...rounds, result.round] });
         return { ok: true, message: result.message };

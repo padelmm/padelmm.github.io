@@ -1,4 +1,5 @@
-import { computeStats, sortByPoints } from './stats';
+import { computeStats, sortByMode } from './stats';
+import type { RankingMode } from './ranking-mode';
 import type { Game, Player, PlayerId, Round, SessionConfig } from './types';
 
 const newId = (): string =>
@@ -168,23 +169,24 @@ export interface FinalPreview {
  * Compute the proposed final-round draw without committing it.
  *
  * Seeding: take the top `courts × 4` *active* players from the current
- * ranking (see `sortByPoints` for the tiebreak order). Group the list
- * into chunks of 4 in rank order — so the strongest 4 share court 1,
- * the next 4 share court 2, and so on. Within each chunk, pair the
- * best+worst against the middle two:
+ * ranking (see `sortByMode` for the tiebreak order — the host's chosen
+ * Points/Wins toggle drives both the leaderboard and the final draw).
+ * Group the list into chunks of 4 in rank order — so the strongest 4
+ * share court 1, the next 4 share court 2, and so on. Within each
+ * chunk, pair the best+worst against the middle two:
  *
  *   ranks (1,2,3,4)  →  Court 1:  (1+4)  vs  (2+3)
  *   ranks (5,6,7,8)  →  Court 2:  (5+8)  vs  (6+7)
  *   ranks (9..12)    →  Court 3:  (9+12) vs (10+11)
  *
- * Result is deterministic given the current ranking, so the preview and
- * the eventual committed round always match.
+ * Result is deterministic given the current ranking + mode, so the
+ * preview shown to the host and the eventual committed round always
+ * match.
  */
-export function previewFinalRound({
-  players,
-  rounds,
-  config,
-}: GenerateRoundInput): FinalPreview | null {
+export function previewFinalRound(
+  { players, rounds, config }: GenerateRoundInput,
+  mode: RankingMode = 'points',
+): FinalPreview | null {
   const active = players.filter((p) => p.status === 'active');
   const courts = config.maxCourts;
   const needed = courts * 4;
@@ -192,7 +194,7 @@ export function previewFinalRound({
     return null;
   }
   const activeIds = new Set(active.map((p) => p.id));
-  const ranked = sortByPoints(computeStats(players, rounds)).filter((s) =>
+  const ranked = sortByMode(computeStats(players, rounds), mode).filter((s) =>
     activeIds.has(s.playerId),
   );
 
@@ -221,11 +223,10 @@ export function previewFinalRound({
   };
 }
 
-export function generateFinalRound({
-  players,
-  rounds,
-  config,
-}: GenerateRoundInput): GenerateRoundResult {
+export function generateFinalRound(
+  { players, rounds, config }: GenerateRoundInput,
+  mode: RankingMode = 'points',
+): GenerateRoundResult {
   const active = players.filter((p) => p.status === 'active');
   const courts = config.maxCourts;
   const needed = courts * 4;
@@ -235,7 +236,7 @@ export function generateFinalRound({
       message: `Need ${needed} active players for a ${courts}-court final (have ${active.length}).`,
     };
   }
-  const preview = previewFinalRound({ players, rounds, config });
+  const preview = previewFinalRound({ players, rounds, config }, mode);
   if (!preview) {
     return { round: null, message: 'Could not build the final round.' };
   }

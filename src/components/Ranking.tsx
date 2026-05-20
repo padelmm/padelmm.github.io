@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSession } from '../lib/store';
-import { computeStats, sortByPoints } from '../lib/stats';
+import { computeStats, sortByMode } from '../lib/stats';
+import { rankingModeStorage, type RankingMode } from '../lib/ranking-mode';
 import type { PlayerId } from '../lib/types';
 import FinalRoundSheet from './FinalRoundSheet';
 
@@ -12,7 +13,19 @@ export default function Ranking() {
   const adjustBonus = useSession((s) => s.adjustBonus);
   const startFinalRound = useSession((s) => s.startFinalRound);
 
-  const ranking = useMemo(() => sortByPoints(computeStats(players, rounds)), [players, rounds]);
+  // Sort preference is a per-phone setting (localStorage) — not session
+  // data — so importing a session from another host doesn't override
+  // how the current host likes to read the leaderboard.
+  const [mode, setMode] = useState<RankingMode>(() => rankingModeStorage.get());
+  const setRankingMode = (next: RankingMode) => {
+    setMode(next);
+    rankingModeStorage.set(next);
+  };
+
+  const ranking = useMemo(
+    () => sortByMode(computeStats(players, rounds), mode),
+    [players, rounds, mode],
+  );
   const [expanded, setExpanded] = useState<PlayerId | null>(null);
   const [finalOpen, setFinalOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,9 +64,33 @@ export default function Ranking() {
 
   return (
     <div className="flex flex-col gap-3 px-4 pb-24 pt-4">
-      <header className="flex items-baseline justify-between">
+      <header className="flex items-center justify-between gap-3">
         <h1 className="text-xl font-bold">Ranking</h1>
-        <span className="text-[10px] uppercase tracking-wider text-slate-400">total points</span>
+        <div
+          role="group"
+          aria-label="Sort leaderboard by"
+          className="inline-flex shrink-0 rounded-full border border-white/10 bg-white/5 p-0.5"
+        >
+          {(['points', 'wins'] as const).map((m) => {
+            const active = mode === m;
+            return (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setRankingMode(m)}
+                aria-pressed={active}
+                className={
+                  'rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider transition ' +
+                  (active
+                    ? 'bg-cyan-500 text-slate-900 shadow-lcd'
+                    : 'text-slate-400 active:scale-95 hover:text-slate-200')
+                }
+              >
+                {m === 'points' ? 'Points' : 'Wins'}
+              </button>
+            );
+          })}
+        </div>
       </header>
 
       {notice && (
@@ -115,14 +152,31 @@ export default function Ranking() {
                       )}
                     </div>
                     <div className="text-[10px] uppercase tracking-wider text-slate-400">
-                      {s.gamesPlayed} g · {s.wins}W-{s.losses}L
-                      {s.draws > 0 ? `-${s.draws}D` : ''}
-                      {s.bonus !== 0 ? ` · bonus ${s.bonus > 0 ? '+' : ''}${s.bonus}` : ''}
+                      {mode === 'wins' ? (
+                        <>
+                          {s.gamesPlayed} g · {s.total} pts
+                          {s.bonus !== 0
+                            ? ` · bonus ${s.bonus > 0 ? '+' : ''}${s.bonus}`
+                            : ''}
+                        </>
+                      ) : (
+                        <>
+                          {s.gamesPlayed} g · {s.wins}W-{s.losses}L
+                          {s.draws > 0 ? `-${s.draws}D` : ''}
+                          {s.bonus !== 0
+                            ? ` · bonus ${s.bonus > 0 ? '+' : ''}${s.bonus}`
+                            : ''}
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="lcd-num text-2xl font-bold text-cyan-300">{s.total}</div>
-                    <div className="text-[9px] uppercase tracking-wider text-slate-500">pts</div>
+                    <div className="lcd-num text-2xl font-bold text-cyan-300">
+                      {mode === 'wins' ? s.wins : s.total}
+                    </div>
+                    <div className="text-[9px] uppercase tracking-wider text-slate-500">
+                      {mode === 'wins' ? 'wins' : 'pts'}
+                    </div>
                   </div>
                 </button>
 
@@ -180,7 +234,8 @@ export default function Ranking() {
           )}
           {canStartFinal && (
             <p className="px-2 text-center text-[11px] text-slate-500">
-              Top {neededForFinal} of {activeCount} active players, seeded by ranking.
+              Top {neededForFinal} of {activeCount} active players, seeded by{' '}
+              {mode === 'wins' ? 'wins' : 'points'}.
             </p>
           )}
         </section>
@@ -188,6 +243,7 @@ export default function Ranking() {
 
       <FinalRoundSheet
         open={finalOpen}
+        mode={mode}
         onClose={() => setFinalOpen(false)}
         onConfirm={onConfirmFinal}
       />
