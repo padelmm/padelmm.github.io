@@ -65,8 +65,14 @@ export default function Play() {
       {currentRound ? (
         <>
           <header className="flex items-baseline justify-between">
-            <h1 className="text-xl font-bold">
-              Round <span className="lcd-num text-cyan-300">{currentRound.number}</span>
+            <h1 className="flex items-baseline gap-2 text-xl font-bold">
+              <span>Round</span>
+              <span className="lcd-num text-cyan-300">{currentRound.number}</span>
+              {currentRound.kind === 'final' && (
+                <span className="rounded-full bg-yellow-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-yellow-300 ring-1 ring-yellow-400/30">
+                  Final
+                </span>
+              )}
             </h1>
             <span className="text-[10px] uppercase tracking-wider text-slate-400">
               Sum {config.targetTotal}
@@ -93,12 +99,17 @@ export default function Play() {
           <ul className="flex flex-col gap-3">
             {currentRound.games.map((g) => {
               const isRecorded = g.recorded;
+              const isFinal = currentRound.kind === 'final';
               return (
                 <li
                   key={g.id}
                   className={
                     'glass rounded-2xl p-3 transition ' +
-                    (isRecorded ? 'ring-1 ring-emerald-400/40' : '')
+                    (isRecorded
+                      ? 'ring-1 ring-emerald-400/40'
+                      : isFinal
+                        ? 'ring-1 ring-yellow-400/30'
+                        : '')
                   }
                 >
                   <div className="mb-2 flex items-center justify-between">

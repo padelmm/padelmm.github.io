@@ -74,15 +74,29 @@ This is where you play.
 Each court shows a compact `A : B` scorebar. The two numbers always add up
 to 24, and a fresh game opens at **12 : 12** with the slider centered.
 
-- **Slide** to set the score, or use the **− / +** buttons for fine
-  adjustments.
+- **Slide toward a side to award that side points.** Drag right and the
+  right team's score climbs (24 at the far right). Drag left and the left
+  team climbs.
+- The two **+** buttons next to the digits do the same thing one point at
+  a time: left **+** awards a point to the left team, right **+** to the
+  right team.
 - Enter just one side — the other auto-fills to make 24 (so if you set 17,
   the other team gets 7).
 - Tap **Save score** when the score is final. To fix a mistake, tap
   **Edit score** on that court to re-open the slider.
 
-The digits are color-coded: low scores glow cyan, high scores glow red,
-12-12 sits in the middle as yellow.
+The colours follow the score live:
+
+- **Digits** glow per their own value — 0 is cyan, 12 yellow, 24 red.
+- **Slider track** is a live two-stop gradient: left end takes the colour
+  of the left team's score, right end takes the colour of the right
+  team's score. A blowout (24 : 0) shows red on the winning side and
+  cyan on the losing side; a balanced 12 : 12 turns the whole track
+  yellow.
+- **Thumb glow** picks up the same colour at its current position, so it
+  cools from red toward cyan as the score evens out.
+- The scale under the slider reads **24 · 0 · 24** — the centre is a
+  balanced draw, both edges are a maximum lead.
 
 ### 👥 Players
 
@@ -110,7 +124,46 @@ Always-on leaderboard, sorted by total points.
   subtract **bonus points** manually. Useful for "best dressed," lateness
   penalties, or settling a disputed point.
 
-Ties are broken by wins, then points-against (lower is better), then name.
+Ties are broken in this order: total points → wins → points-against
+(lower is better) → games played (fewer is better, i.e. higher points
+per game) → name.
+
+#### Start final round
+
+When you're ready to crown the avond, scroll to the bottom of the Ranking
+tab and tap the gold **Start final round** button. It opens a preview
+sheet showing exactly how the courts will be drawn, so you can eyeball
+the matches before committing.
+
+How the final is seeded:
+
+- **Who plays.** The top `4 × Max courts` active players (so 12 with 3
+  courts, 8 with 2, 4 with 1). The rest sit out for the round; their
+  ranking and points are untouched.
+- **Which court.** Strongest 4 share **Court 1** (the championship
+  court), the next 4 share Court 2, and so on.
+- **Which side.** Within each court the top and bottom seed pair up
+  against the middle two — so on Court 1 it's `(rank 1 + rank 4)` vs
+  `(rank 2 + rank 3)`, on Court 2 `(rank 5 + rank 8)` vs
+  `(rank 6 + rank 7)`, and so on. That keeps each two-on-two match
+  evenly weighted.
+
+After you confirm, the final lands as a new round with a gold accent and
+a **FINAL** badge — visible on the Round tab while you play it and in
+History afterwards. Final scores count toward the leaderboard exactly
+like any other round.
+
+Conditions for the button to be enabled (it tells you which one is
+missing if it's disabled):
+
+- the session is running,
+- at least one game has been saved (so a ranking actually exists),
+- enough active players for `4 × Max courts`,
+- no final has been played in this session yet.
+
+Only **one final per session.** If you want another one with the same
+group, use **Session → Clear games** to wipe scores while keeping the
+roster, then play and finalise again.
 
 ### 📜 History
 
@@ -173,6 +226,10 @@ Tools for managing the session itself.
 - **Pausing.** Paused players step out of the rotation completely. When
   they un-pause they slot back in with whatever rest count they had
   before — no penalty, no freebie.
+- **Final round vs. last normal round.** The Final is deterministic
+  (best 4 on Court 1, top + bottom pair on each court). A normal round
+  is randomly shuffled. If you'd rather end on a random round, just keep
+  hitting *Generate next round* — the Final button is opt-in.
 
 ---
 

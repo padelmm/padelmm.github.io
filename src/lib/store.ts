@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { generateRound, newId } from './teams';
+import { generateFinalRound, generateRound, newId } from './teams';
 import type { Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
 
 const SCHEMA_VERSION = 1;
@@ -40,6 +40,7 @@ interface SessionActions {
   startSession: () => void;
   generateNextRound: () => { ok: boolean; message?: string };
   reshuffleCurrentRound: () => { ok: boolean; message?: string };
+  startFinalRound: () => { ok: boolean; message?: string };
   setScore: (roundId: string, gameId: string, scoreA: number) => void;
   recordGame: (roundId: string, gameId: string) => void;
   unrecordGame: (roundId: string, gameId: string) => void;
@@ -131,6 +132,28 @@ export const useSession = create<SessionStore>()(
         const { players, rounds, config, status } = get();
         if (status !== 'running') return { ok: false, message: 'Session not started.' };
         const result = generateRound({ players, rounds, config });
+        if (!result.round) return { ok: false, message: result.message };
+        set({ rounds: [...rounds, result.round] });
+        return { ok: true, message: result.message };
+      },
+
+      startFinalRound: () => {
+        const { players, rounds, config, status } = get();
+        if (status !== 'running') return { ok: false, message: 'Session not started.' };
+        if (rounds.some((r) => r.kind === 'final')) {
+          return { ok: false, message: 'Final round already played in this session.' };
+        }
+        const recordedCount = rounds.reduce(
+          (acc, r) => acc + r.games.filter((g) => g.recorded).length,
+          0,
+        );
+        if (recordedCount === 0) {
+          return {
+            ok: false,
+            message: 'Play (and save) at least one game so a ranking exists.',
+          };
+        }
+        const result = generateFinalRound({ players, rounds, config });
         if (!result.round) return { ok: false, message: result.message };
         set({ rounds: [...rounds, result.round] });
         return { ok: true, message: result.message };

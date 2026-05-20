@@ -59,6 +59,16 @@ export function computeStats(players: readonly Player[], rounds: readonly Round[
   return Array.from(map.values());
 }
 
+/**
+ * Tiebreak order, applied left-to-right:
+ *   1. total points (desc) — primary
+ *   2. wins (desc)         — more wins beats fewer
+ *   3. points against (asc)— better defence beats worse
+ *   4. games played (asc)  — efficiency: fewer games for the same points
+ *                            beats more games (used as a final-round
+ *                            seeding tiebreak too)
+ *   5. name (asc)          — stable, alphabetical fallback
+ */
 export function sortByPoints(stats: readonly PlayerStats[]): PlayerStats[] {
   return stats
     .slice()
@@ -67,6 +77,7 @@ export function sortByPoints(stats: readonly PlayerStats[]): PlayerStats[] {
         b.total - a.total ||
         b.wins - a.wins ||
         a.pointsAgainst - b.pointsAgainst ||
+        a.gamesPlayed - b.gamesPlayed ||
         a.name.localeCompare(b.name),
     );
 }

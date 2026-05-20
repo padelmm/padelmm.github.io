@@ -22,12 +22,21 @@ export interface Game {
   recorded: boolean;
 }
 
+/**
+ * 'final' marks a single end-of-day round drawn from the current ranking
+ * with a deterministic seeding (see `generateFinalRound`). Older sessions
+ * shared before this field existed import as `undefined`, which the rest
+ * of the app treats as 'normal'.
+ */
+export type RoundKind = 'normal' | 'final';
+
 export interface Round {
   id: string;
   number: number;
   games: Game[];
   restingPlayerIds: PlayerId[];
   createdAt: number;
+  kind?: RoundKind;
 }
 
 export interface SessionConfig {

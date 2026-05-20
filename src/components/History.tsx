@@ -106,20 +106,30 @@ export default function History() {
       <ol className="flex flex-col gap-3">
         {sorted.map((r, idx) => {
           const isCurrent = idx === 0;
+          const isFinal = r.kind === 'final';
           const recordedGames = r.games.filter((g) => g.recorded).length;
           return (
             <li
               key={r.id}
               className={
                 'glass rounded-2xl p-3 ' +
-                (isCurrent ? 'ring-1 ring-cyan-400/30' : '')
+                (isFinal
+                  ? 'ring-1 ring-yellow-400/40'
+                  : isCurrent
+                    ? 'ring-1 ring-cyan-400/30'
+                    : '')
               }
             >
               <header className="mb-2 flex items-baseline justify-between">
                 <h2 className="flex items-baseline gap-2 text-sm font-semibold">
                   <span>Round</span>
                   <span className="lcd-num text-base text-cyan-300">{r.number}</span>
-                  {isCurrent && (
+                  {isFinal && (
+                    <span className="rounded-full bg-yellow-400/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] text-yellow-300 ring-1 ring-yellow-400/30">
+                      final
+                    </span>
+                  )}
+                  {isCurrent && !isFinal && (
                     <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-cyan-300 ring-1 ring-cyan-500/30">
                       current
                     </span>

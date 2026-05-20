@@ -1,3 +1,4 @@
+import { computeStats, sortByPoints } from './stats';
 import type { Game, Player, PlayerId, Round, SessionConfig } from './types';
 
 const newId = (): string =>
@@ -140,6 +141,128 @@ export function generateRound({ players, rounds, config }: GenerateRoundInput): 
       .map((id) => active.find((p) => p.id === id)?.name)
       .filter((n): n is string => !!n);
     return { round, message: `Resting: ${names.join(', ')}` };
+  }
+  return { round };
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Final round                                                                */
+/* -------------------------------------------------------------------------- */
+
+export interface FinalPreviewCourt {
+  court: number;
+  teamA: [PlayerId, PlayerId];
+  teamB: [PlayerId, PlayerId];
+  /** Player IDs in ranking order for the four players on this court. */
+  rankedIds: [PlayerId, PlayerId, PlayerId, PlayerId];
+}
+
+export interface FinalPreview {
+  courts: FinalPreviewCourt[];
+  restingPlayerIds: PlayerId[];
+  totalActive: number;
+  needed: number;
+}
+
+/**
+ * Compute the proposed final-round draw without committing it.
+ *
+ * Seeding: take the top `courts × 4` *active* players from the current
+ * ranking (see `sortByPoints` for the tiebreak order). Group the list
+ * into chunks of 4 in rank order — so the strongest 4 share court 1,
+ * the next 4 share court 2, and so on. Within each chunk, pair the
+ * best+worst against the middle two:
+ *
+ *   ranks (1,2,3,4)  →  Court 1:  (1+4)  vs  (2+3)
+ *   ranks (5,6,7,8)  →  Court 2:  (5+8)  vs  (6+7)
+ *   ranks (9..12)    →  Court 3:  (9+12) vs (10+11)
+ *
+ * Result is deterministic given the current ranking, so the preview and
+ * the eventual committed round always match.
+ */
+export function previewFinalRound({
+  players,
+  rounds,
+  config,
+}: GenerateRoundInput): FinalPreview | null {
+  const active = players.filter((p) => p.status === 'active');
+  const courts = config.maxCourts;
+  const needed = courts * 4;
+  if (active.length < needed) {
+    return null;
+  }
+  const activeIds = new Set(active.map((p) => p.id));
+  const ranked = sortByPoints(computeStats(players, rounds)).filter((s) =>
+    activeIds.has(s.playerId),
+  );
+
+  const finalists = ranked.slice(0, needed);
+  const resting = ranked.slice(needed).map((s) => s.playerId);
+
+  const courtsOut: FinalPreviewCourt[] = [];
+  for (let c = 0; c < courts; c++) {
+    const group = finalists.slice(c * 4, c * 4 + 4);
+    if (group.length < 4) break;
+    const ids = group.map((s) => s.playerId) as [PlayerId, PlayerId, PlayerId, PlayerId];
+    courtsOut.push({
+      court: c + 1,
+      // Strongest + weakest of the chunk on one side, middle two on the other.
+      teamA: [ids[0], ids[3]],
+      teamB: [ids[1], ids[2]],
+      rankedIds: ids,
+    });
+  }
+
+  return {
+    courts: courtsOut,
+    restingPlayerIds: resting,
+    totalActive: active.length,
+    needed,
+  };
+}
+
+export function generateFinalRound({
+  players,
+  rounds,
+  config,
+}: GenerateRoundInput): GenerateRoundResult {
+  const active = players.filter((p) => p.status === 'active');
+  const courts = config.maxCourts;
+  const needed = courts * 4;
+  if (active.length < needed) {
+    return {
+      round: null,
+      message: `Need ${needed} active players for a ${courts}-court final (have ${active.length}).`,
+    };
+  }
+  const preview = previewFinalRound({ players, rounds, config });
+  if (!preview) {
+    return { round: null, message: 'Could not build the final round.' };
+  }
+
+  const initialScore = Math.floor(config.targetTotal / 2);
+  const games: Game[] = preview.courts.map((c) => ({
+    id: newId(),
+    court: c.court,
+    teamA: { playerIds: c.teamA, score: initialScore },
+    teamB: { playerIds: c.teamB, score: initialScore },
+    recorded: false,
+  }));
+
+  const round: Round = {
+    id: newId(),
+    number: rounds.length + 1,
+    games,
+    restingPlayerIds: preview.restingPlayerIds,
+    createdAt: Date.now(),
+    kind: 'final',
+  };
+
+  if (preview.restingPlayerIds.length > 0) {
+    const names = preview.restingPlayerIds
+      .map((id) => active.find((p) => p.id === id)?.name)
+      .filter((n): n is string => !!n);
+    return { round, message: `Sitting out: ${names.join(', ')}` };
   }
   return { round };
 }
