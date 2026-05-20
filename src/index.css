@@ -104,23 +104,23 @@ textarea {
 
 /* Range slider styling.
  *
- * The track gradient is symmetric: red at both ends, cyan in the middle.
- * That way the colour at the thumb position reflects how *lopsided* the
- * score is, not which team is on top:
- *   slider at 0  (0:24)  → thumb over red    (blowout)
- *   slider at 12 (12:12) → thumb over cyan   (balanced)
- *   slider at 24 (24:0)  → thumb over red    (blowout)
+ * The track is a live two-stop gradient: the left end takes the colour of
+ * the LEFT team's current score, the right end takes the colour of the
+ * RIGHT team's current score. As the host drags, the colours follow the
+ * scoreboard:
+ *   24 : 0  → red on the left,  cyan on the right
+ *   12 : 12 → yellow across the whole track
+ *    0 : 24 → cyan on the left, red on the right
  *
- * `in oklch` interpolation keeps the colours vivid through the centre
- * crossover instead of muddying through grey.
- *
- * The thumb itself reads a `--score-thumb-color` CSS variable that
- * `ScoreSlider.tsx` sets in JS to match the current slider position on
- * the same gradient — so as you drag, the thumb's glow and fill morph
- * from cyan (centre) to red (edge).
+ * Both endpoints (and the thumb glow) are driven by CSS variables that
+ * `ScoreSlider.tsx` recomputes on every render via `scoreColor()` /
+ * `intensityColor()`. `in oklch` interpolation keeps the mid-track colour
+ * vivid instead of muddying through grey.
  */
 .score-slider {
-  --score-thumb-color: #22d3ee;
+  --score-thumb-color: #facc15;
+  --score-track-from: #facc15;
+  --score-track-to: #facc15;
   -webkit-appearance: none;
   appearance: none;
   background: transparent;
@@ -131,13 +131,8 @@ textarea {
   border-radius: 9999px;
   background: linear-gradient(
     to right in oklch,
-    hsl(0, 85%, 62%) 0%,
-    hsl(25, 85%, 62%) 18%,
-    hsl(50, 85%, 62%) 32%,
-    hsl(190, 85%, 62%) 50%,
-    hsl(50, 85%, 62%) 68%,
-    hsl(25, 85%, 62%) 82%,
-    hsl(0, 85%, 62%) 100%
+    var(--score-track-from),
+    var(--score-track-to)
   );
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
@@ -168,13 +163,8 @@ textarea {
   border-radius: 9999px;
   background: linear-gradient(
     to right in oklch,
-    hsl(0, 85%, 62%) 0%,
-    hsl(25, 85%, 62%) 18%,
-    hsl(50, 85%, 62%) 32%,
-    hsl(190, 85%, 62%) 50%,
-    hsl(50, 85%, 62%) 68%,
-    hsl(25, 85%, 62%) 82%,
-    hsl(0, 85%, 62%) 100%
+    var(--score-track-from),
+    var(--score-track-to)
   );
 }
 .score-slider::-moz-range-thumb {
