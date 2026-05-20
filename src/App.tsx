@@ -7,6 +7,7 @@ import History from './components/History';
 import SessionMenu from './components/SessionMenu';
 import Splash from './components/Splash';
 import AppHeader from './components/AppHeader';
+import UpdateBanner from './components/UpdateBanner';
 import { introStorage, useSession } from './lib/store';
 
 type Tab = 'play' | 'players' | 'ranking' | 'history' | 'session';
@@ -31,6 +32,7 @@ export default function App() {
   if (showSplash) {
     return (
       <main className="mx-auto max-w-md">
+        <UpdateBanner />
         <Splash
           onContinue={() => {
             introStorage.mark();
@@ -44,6 +46,7 @@ export default function App() {
   if (status === 'setup') {
     return (
       <main className="mx-auto max-w-md">
+        <UpdateBanner />
         <Setup />
       </main>
     );
@@ -51,6 +54,7 @@ export default function App() {
 
   return (
     <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col">
+      <UpdateBanner />
       <AppHeader />
       <main className="flex-1">
         {tab === 'play' && <Play />}

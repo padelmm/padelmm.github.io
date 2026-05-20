@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
 import { copyToClipboard, exportSession, type ExportResult } from '../lib/share';
+import { usePwa } from '../lib/pwa';
 import ImportSessionForm from './ImportSessionForm';
 import Splash from './Splash';
 
@@ -17,6 +18,7 @@ export default function SessionMenu() {
   const newSession = useSession((s) => s.newSession);
   const finishSession = useSession((s) => s.finishSession);
   const clearGames = useSession((s) => s.clearGames);
+  const { forceReload } = usePwa();
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
@@ -25,7 +27,16 @@ export default function SessionMenu() {
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
   const [showCode, setShowCode] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [reloading, setReloading] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+
+  const onReload = async () => {
+    setReloading(true);
+    await forceReload();
+    // If `forceReload` returns without actually reloading (shouldn't
+    // happen, but a paranoid guard), reset the UI state.
+    setReloading(false);
+  };
 
   const onReset = () => {
     if (confirmReset) {
@@ -200,6 +211,18 @@ export default function SessionMenu() {
       <p className="glass rounded-xl px-3 py-3 text-[11px] text-slate-400">
         Everything is stored only on this phone. Nothing is uploaded. Use Share above to
         hand off mid-session.
+      </p>
+
+      <button
+        type="button"
+        onClick={onReload}
+        disabled={reloading}
+        className="glass w-full rounded-2xl px-4 py-3 text-sm font-medium text-slate-200 transition active:scale-[0.99] disabled:opacity-60"
+      >
+        {reloading ? 'Reloading…' : 'Reload app (keep all data)'}
+      </button>
+      <p className="px-2 -mt-1 text-center text-[10px] text-slate-500">
+        Forces the latest version. Players, scores, and settings are kept.
       </p>
 
       <button

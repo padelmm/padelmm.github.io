@@ -207,9 +207,22 @@ Tools for managing the session itself.
   same group. Tap twice to confirm.
 - **New mix & match (clear data)** — wipes everything and goes back to
   the Setup screen. Tap twice to confirm.
+- **Reload app (keep all data)** — forces the latest version of the app
+  to be fetched and activated. Players, scores, rounds, and settings are
+  kept (they live in browser storage, not in the JS bundle). Useful when
+  a new feature has been released and you want it right now.
 - **About** — re-opens the Blue Lions welcome panel (logo, name, version).
   Useful when handing the phone to someone for the first time, or just to
   re-check the app version.
+
+#### Automatic update notice
+
+When a new version of the app finishes downloading in the background, a
+small cyan **"Update ready · Reload"** banner appears across the top of
+every screen. Tap **Reload** to switch to the new version (data stays);
+tap **×** to keep playing and update later. The app also re-checks for
+updates whenever you bring it back from the background and once an hour
+while it's open.
 
 ---
 
