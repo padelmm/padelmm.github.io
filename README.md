@@ -1,5 +1,7 @@
 # Blue Lions · Padel Mix & Match
 
+> Mix & Match for padel evenings — by Alex K.
+
 A tiny web app to run a Padel **Mix & Match avond** on one phone.
 Random teams every round, simple 24-point scoring, live ranking.
 
@@ -290,3 +292,20 @@ npm run typecheck  # tsc --noEmit only
 
 For Pages deployment to work, the repo's **Settings → Pages → Source**
 must be set to **GitHub Actions**.
+
+---
+
+## Credits & License
+
+Made by **Alex K** ([github.com/sedoychel](https://github.com/sedoychel))
+for the Blue Lions padel club.
+
+Released under the [MIT License](./LICENSE) — you're welcome to fork it
+and adapt it for your own club (tennis, squash, anything where players
+rotate every round). If you do, a small note pointing back to this repo
+is appreciated but not required.
+
+Want to send feedback, suggest an idea, or report a bug? Use
+**Session → About → Send feedback** in the app, which opens a public
+GitHub issue. No email addresses to scrape; GitHub authentication
+handles spam protection.

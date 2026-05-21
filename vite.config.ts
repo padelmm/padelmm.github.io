@@ -13,7 +13,8 @@ export default defineConfig({
       manifest: {
         name: 'Padel Mix & Match',
         short_name: 'Padel M&M',
-        description: 'Random teams, sum-to-24 scoring, ranking — all on your phone.',
+        description:
+          'Mix & Match for padel evenings — by Alex K. Random teams, sum-to-24 scoring, ranking — all on your phone.',
         theme_color: '#0c1a36',
         background_color: '#0c1a36',
         display: 'standalone',

@@ -17,6 +17,15 @@
 const FEEDBACK_URL =
   'https://github.com/padelmm/padelmm.github.io/issues/new?template=feedback.yml';
 
+/**
+ * Creator-credit deep-link, shown on the About panel only. Points at a
+ * GitHub *profile* (no email, no phone) so contact passes through
+ * GitHub's own anti-spam. Uses the handle, not a real name, to keep
+ * the creator's identity loosely coupled to the app.
+ */
+const CREATOR_URL = 'https://github.com/sedoychel';
+const CREATOR_NAME = 'Alex K';
+
 interface Props {
   onContinue: () => void;
   /**
@@ -82,19 +91,34 @@ export default function Splash({
         </p>
 
         {showFeedback && (
-          <div className="mt-4 flex flex-col items-center gap-1">
-            <a
-              href={FEEDBACK_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 transition active:scale-[0.97] hover:bg-cyan-500/15"
-            >
-              Send feedback
-            </a>
-            <span className="px-2 text-center text-[10px] uppercase tracking-widest text-slate-500">
-              opens a public GitHub issue · please don't include personal info
-            </span>
-          </div>
+          <>
+            <p className="mt-2 text-center text-[10px] uppercase tracking-widest text-slate-500">
+              Made by{' '}
+              <a
+                href={CREATOR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-300 underline-offset-2 hover:underline"
+              >
+                {CREATOR_NAME}
+              </a>{' '}
+              · MIT licensed
+            </p>
+
+            <div className="mt-4 flex flex-col items-center gap-1">
+              <a
+                href={FEEDBACK_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 transition active:scale-[0.97] hover:bg-cyan-500/15"
+              >
+                Send feedback
+              </a>
+              <span className="px-2 text-center text-[10px] uppercase tracking-widest text-slate-500">
+                opens a public GitHub issue · please don't include personal info
+              </span>
+            </div>
+          </>
         )}
       </div>
     </div>
