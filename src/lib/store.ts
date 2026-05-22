@@ -49,6 +49,12 @@ interface SessionActions {
   deleteGame: (roundId: string, gameId: string) => void;
   adjustBonus: (id: PlayerId, delta: number) => void;
   finishSession: () => void;
+  /**
+   * Reverse of `finishSession`: flips a finished session back to
+   * running without touching any data. Recovery path for accidental
+   * Finish taps; keeps all players, rounds, scores, and the ranking.
+   */
+  resumeSession: () => void;
   newSession: () => void;
   clearGames: () => void;
   setConfig: (patch: Partial<SessionState['config']>) => void;
@@ -305,6 +311,14 @@ export const useSession = create<SessionStore>()(
       },
 
       finishSession: () => set({ status: 'finished' }),
+
+      resumeSession: () => {
+        // Pure status flip — no data mutation. Only meaningful from
+        // 'finished'; guarded so a stray call from 'setup' can't
+        // bypass the configuration flow.
+        if (get().status !== 'finished') return;
+        set({ status: 'running' });
+      },
 
       newSession: () => set(defaultState()),
 

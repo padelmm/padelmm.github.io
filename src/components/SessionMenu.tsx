@@ -17,6 +17,7 @@ export default function SessionMenu() {
   }));
   const newSession = useSession((s) => s.newSession);
   const finishSession = useSession((s) => s.finishSession);
+  const resumeSession = useSession((s) => s.resumeSession);
   const clearGames = useSession((s) => s.clearGames);
   const { forceReload } = usePwa();
 
@@ -200,6 +201,16 @@ export default function SessionMenu() {
           {confirmFinish
             ? 'Tap again to confirm — finishes session, ranking stays visible'
             : 'Finish session (keeps ranking visible)'}
+        </button>
+      )}
+
+      {status === 'finished' && (
+        <button
+          type="button"
+          onClick={resumeSession}
+          className="w-full rounded-2xl bg-cyan-500/90 px-4 py-4 text-sm font-semibold text-slate-900 shadow-lcd transition active:scale-[0.99]"
+        >
+          Resume session (keeps all players & scores)
         </button>
       )}
 

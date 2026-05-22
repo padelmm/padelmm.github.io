@@ -215,7 +215,12 @@ Tools for managing the session itself.
   whatever is on the current phone.
 - **Finish session (keeps ranking visible)** — locks the session as
   read-only. You can still browse Ranking and History; just no more
-  rounds.
+  rounds. Requires a two-tap confirm to prevent misfires.
+- **Resume session (keeps all players & scores)** — shown *only* when
+  the current session is already finished. Flips it back to running
+  with all players, rounds, scores, and ranking intact. Useful when
+  someone tapped Finish by accident, or you want to add one more round
+  after announcing the standings.
 - **Clear games (keep players)** — wipes all rounds and scores but keeps
   the player list and settings. Handy for starting a fresh avond with the
   same group. Tap twice to confirm.
