@@ -22,6 +22,7 @@ export default function SessionMenu() {
 
   const [confirmReset, setConfirmReset] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [confirmFinish, setConfirmFinish] = useState(false);
   const [copied, setCopied] = useState<'none' | 'all' | number>('none');
   const [importOpen, setImportOpen] = useState(false);
   const [exportResult, setExportResult] = useState<ExportResult | null>(null);
@@ -55,6 +56,21 @@ export default function SessionMenu() {
     } else {
       setConfirmClear(true);
       window.setTimeout(() => setConfirmClear(false), 4000);
+    }
+  };
+
+  // Finish-session is a one-way transition (status: running -> finished)
+  // that unmounts this very button via the `status === 'running'` guard
+  // below. Without a confirm step the button appears to vanish on first
+  // tap, which is confusing. Mirror the two-tap pattern used by Clear /
+  // New session so the host has a clear way to cancel a misfire.
+  const onFinish = () => {
+    if (confirmFinish) {
+      finishSession();
+      setConfirmFinish(false);
+    } else {
+      setConfirmFinish(true);
+      window.setTimeout(() => setConfirmFinish(false), 4000);
     }
   };
 
@@ -173,10 +189,17 @@ export default function SessionMenu() {
       {status === 'running' && (
         <button
           type="button"
-          onClick={finishSession}
-          className="glass w-full rounded-2xl px-4 py-4 text-sm font-medium text-slate-200 transition active:scale-[0.99]"
+          onClick={onFinish}
+          className={
+            'w-full rounded-2xl px-4 py-4 text-sm font-medium transition active:scale-[0.99] ' +
+            (confirmFinish
+              ? 'bg-amber-500 text-slate-900 shadow-lcd-gold'
+              : 'glass text-slate-200')
+          }
         >
-          Finish session (keeps ranking visible)
+          {confirmFinish
+            ? 'Tap again to confirm — finishes session, ranking stays visible'
+            : 'Finish session (keeps ranking visible)'}
         </button>
       )}
 

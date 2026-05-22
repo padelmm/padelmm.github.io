@@ -38,3 +38,7 @@ coverage/
 .cache/
 .parcel-cache/
 .eslintcache
+
+# One-off tool configs — never commit
+.email-rewrite.mailmap
+.mailmap.local
