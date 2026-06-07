@@ -19,6 +19,36 @@ automated test harness.
 
 ---
 
+## [0.3.3] — 2026-06-07
+
+Mid-session settings + stepper alignment fix.
+
+### Added
+- **Round settings panel in the Session tab**: hosts can now change
+  points per game, number of courts, and the avoid-same-partners
+  toggle *after* tapping Start. Same controls as the Setup screen,
+  same `setConfig` store action — so the host who's invested 10
+  minutes entering 12 players doesn't lose the roster just to bump
+  the points from 24 to 32. Shown only when the session has
+  actually started (`status !== 'setup'`); a small advisory
+  underneath the panel clarifies that saved scores in past rounds
+  keep their original target while future rounds use the new one.
+
+### Changed
+- **`RoundSettings` extracted from `Setup`**: the entire Settings
+  card (points segmented chips, custom even stepper, courts
+  stepper, partner-repeat toggle) is now a standalone component
+  consumed by both `Setup` and `SessionMenu`. No behaviour change
+  in Setup; the Session-tab mount is the new feature.
+- **NumberStepper alignment**: the readout box is now a fixed
+  `6.5rem` outer width (was `min-w-[5.5rem]` which grew when a unit
+  suffix was rendered). The digit centres inside via `flex-1` so a
+  stepper with a `pts` unit and one without sit at the exact same
+  position in adjacent rows — `Custom value` and `Number of courts`
+  in the Settings panel now line up under each other.
+
+---
+
 ## [0.3.2] — 2026-06-07
 
 Second light-theme polish patch — the colour-bleed "blurish" feel on

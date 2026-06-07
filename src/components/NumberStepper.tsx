@@ -126,7 +126,18 @@ export default function NumberStepper({
       >
         −
       </button>
-      <label className="flex min-w-[5.5rem] items-baseline justify-center gap-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
+      <label
+        // Fixed width (not min-width) so a stepper with a unit and a
+        // stepper without one render at the exact same outer width.
+        // Without this, the optional unit suffix stretches the
+        // readout and adjacent steppers in the same column visually
+        // disagree on where their right edge lands. The width is
+        // sized to comfortably fit two digits plus the longest
+        // expected unit string (`pts` / `courts`); the input itself
+        // grows inside it so the digit stays centred whether or not
+        // a unit is rendered.
+        className="flex w-[6.5rem] items-baseline justify-center gap-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2"
+      >
         <input
           type="text"
           inputMode="numeric"
@@ -150,13 +161,13 @@ export default function NumberStepper({
               e.currentTarget.blur();
             }
           }}
-          // Width sized for two digits + unit so 6→98 doesn't reflow
-          // the row. `text-center` keeps the number visually
-          // anchored regardless of digit count.
-          className="lcd-num w-12 bg-transparent text-center text-2xl font-bold text-cyan-300 tabular-nums caret-cyan-400 focus:outline-none"
+          // `flex-1` lets the digit own the leftover space inside
+          // the fixed-width container, keeping it centred whether
+          // or not a unit suffix is rendered beside it.
+          className="lcd-num min-w-0 flex-1 bg-transparent text-center text-2xl font-bold text-cyan-300 tabular-nums caret-cyan-400 focus:outline-none"
         />
         {unit && (
-          <span className="text-[10px] uppercase tracking-wider text-slate-500">
+          <span className="shrink-0 text-[10px] uppercase tracking-wider text-slate-500">
             {unit}
           </span>
         )}

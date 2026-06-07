@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
-import { APP_DEFAULTS, normalisePointsPerGame } from '../lib/defaults';
+import { APP_DEFAULTS } from '../lib/defaults';
 import { useTheme } from '../lib/use-theme';
 import ImportSessionForm from './ImportSessionForm';
-import NumberStepper from './NumberStepper';
+import RoundSettings from './RoundSettings';
 
 export default function Setup() {
   const players = useSession((s) => s.players);
@@ -12,21 +12,12 @@ export default function Setup() {
   const removePlayer = useSession((s) => s.removePlayer);
   const renamePlayer = useSession((s) => s.renamePlayer);
   const startSession = useSession((s) => s.startSession);
-  const setConfig = useSession((s) => s.setConfig);
 
   const { resolved } = useTheme();
   const logoSrc = resolved === 'light' ? '/bl-logo-light.png' : '/bl-logo.png';
 
   const [name, setName] = useState('');
   const [importOpen, setImportOpen] = useState(false);
-  // Whether the "Custom" points stepper is shown. We initialise this
-  // off the *persisted* target so a host whose previous session ended
-  // with e.g. 26 lands back in Custom mode on their next setup.
-  const [customPointsOpen, setCustomPointsOpen] = useState(
-    !APP_DEFAULTS.pointsPerGameOptions.includes(
-      config.targetTotal as (typeof APP_DEFAULTS.pointsPerGameOptions)[number],
-    ),
-  );
 
   const trimmed = name.trim();
   const duplicate = players.some(
@@ -159,102 +150,8 @@ export default function Setup() {
         )}
       </section>
 
-      <section className="glass rounded-2xl p-4">
-        <h2 className="text-sm font-semibold text-slate-300">Settings</h2>
+      <RoundSettings />
 
-        <div className="mt-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span>Points per game</span>
-            <span className="text-[10px] uppercase tracking-wider text-slate-500">
-              sum
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {APP_DEFAULTS.pointsPerGameOptions.map((n) => {
-              const selected = !customPointsOpen && config.targetTotal === n;
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => {
-                    setCustomPointsOpen(false);
-                    setConfig({ targetTotal: n });
-                  }}
-                  className={
-                    'h-9 min-w-[3rem] rounded-lg border px-2 text-sm font-medium transition ' +
-                    (selected
-                      ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
-                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
-                  }
-                >
-                  {n}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => {
-                setCustomPointsOpen(true);
-                // If the host had a preset selected, switch to the
-                // nearest even custom value so the stepper has a sane
-                // starting point.
-                setConfig({
-                  targetTotal: normalisePointsPerGame(config.targetTotal),
-                });
-              }}
-              className={
-                'h-9 rounded-lg border px-3 text-sm font-medium transition ' +
-                (customPointsOpen
-                  ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
-                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
-              }
-            >
-              Custom
-            </button>
-          </div>
-          {customPointsOpen && (
-            <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-              <span className="text-slate-400">
-                Custom value
-                <span className="ml-2 text-[10px] uppercase tracking-wider text-slate-500">
-                  {APP_DEFAULTS.pointsPerGameMin}–{APP_DEFAULTS.pointsPerGameMax} · even
-                </span>
-              </span>
-              <NumberStepper
-                value={config.targetTotal}
-                min={APP_DEFAULTS.pointsPerGameMin}
-                max={APP_DEFAULTS.pointsPerGameMax}
-                step={APP_DEFAULTS.pointsPerGameStep}
-                onChange={(n) => setConfig({ targetTotal: n })}
-                aria-label="Points per game"
-                unit="pts"
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-          <span>Number of courts</span>
-          <NumberStepper
-            value={config.maxCourts}
-            min={APP_DEFAULTS.courtsMin}
-            max={APP_DEFAULTS.courtsMax}
-            step={1}
-            onChange={(n) => setConfig({ maxCourts: n })}
-            aria-label="Number of courts"
-          />
-        </div>
-
-        <label className="mt-4 flex cursor-pointer items-center justify-between gap-3">
-          <span className="text-sm">Avoid same partners in consecutive rounds</span>
-          <input
-            type="checkbox"
-            checked={config.avoidImmediateRepeat}
-            onChange={(e) => setConfig({ avoidImmediateRepeat: e.target.checked })}
-            className="h-5 w-5 accent-cyan-500"
-          />
-        </label>
-      </section>
 
       <div className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-md">
         <button

@@ -3,6 +3,7 @@ import { useSession } from '../lib/store';
 import { copyToClipboard, exportSession, type ExportResult } from '../lib/share';
 import { usePwa } from '../lib/pwa';
 import ImportSessionForm from './ImportSessionForm';
+import RoundSettings from './RoundSettings';
 import Splash from './Splash';
 import ThemeToggle from './ThemeToggle';
 
@@ -187,6 +188,21 @@ export default function SessionMenu() {
 
         {importOpen && <ImportSessionForm onImported={() => setImportOpen(false)} />}
       </section>
+
+      {/* Round settings — exposed mid-session so a host who already
+        * entered 12 players (a non-trivial time investment) can
+        * still tweak points-per-game, courts, or the partner-repeat
+        * toggle without losing the roster. Hidden in 'setup' mode
+        * because the Setup screen already mounts this same panel
+        * inline above the Start button. */}
+      {status !== 'setup' && (
+        <>
+          <h2 className="mt-2 px-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+            Round settings
+          </h2>
+          <RoundSettings showLiveAdvice />
+        </>
+      )}
 
       <h2 className="mt-2 px-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
         Session control
