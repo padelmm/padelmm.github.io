@@ -19,6 +19,44 @@ automated test harness.
 
 ---
 
+## [0.3.2] — 2026-06-07
+
+Second light-theme polish patch — the colour-bleed "blurish" feel on
+LCD-style elements is gone, and the Setup steppers now accept direct
+typing so big jumps don't require 40+ taps.
+
+### Changed
+- **NumberStepper — type-to-set centre**: the LCD value in the middle
+  of the stepper became an inline `inputMode="numeric"` text field.
+  Tap the number, type, Enter / blur to commit. The commit pass
+  snaps to the nearest valid even (or step-multiple) inside `[min,
+  max]` so typing "27" lands on "28" and teaches the parity rule by
+  example. Escape reverts; +/− still work and are now equivalent to
+  "nudge by step". Same control for both Custom points (6–98 step
+  2) and Number of courts (1–12 step 1).
+- **`startSession` safety net**: re-runs `normalisePointsPerGame()`
+  on `config.targetTotal` at the moment the session goes live, so a
+  host who taps "Start session" without blurring a dirty points
+  input can't ship an odd target. Sum scoring depends on a whole-
+  number midpoint, so this is enforced at the boundary rather than
+  trusted to the input commit alone.
+
+### Fixed
+- **Light-theme LCD glow** ("Round 1, score, slider… blurish"):
+  - `.lcd-num` text-shadow set to `none` in light mode. The CRT-
+    style `0 0 6px / 14px currentColor` halo bled cyan/orange/green
+    around digits on the cream surface — 1CD light doesn't use
+    coloured text glow, so the digit colour (already darkened via
+    `--score-lightness`) is left to carry the meaning on its own.
+  - `shadow-lcd` / `shadow-lcd-gold` button halos replaced with a
+    neutral `0 4px 10px -4px rgba(15,23,42,0.25)` elevation in light
+    mode. Buttons keep their lift, lose the colour bleed.
+  - Score-slider thumb `box-shadow` (an intensity-keyed coloured
+    glow) replaced with the same neutral lift in light mode so the
+    thumb reads as a clean disc instead of a smudge.
+
+---
+
 ## [0.3.1] — 2026-06-07
 
 Polish patch off the v0.3.0 launch. Six visual / UX bugs raised by the

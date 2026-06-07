@@ -168,10 +168,23 @@ export const useSession = create<SessionStore>()(
       },
 
       startSession: () => {
-        const { players } = get();
+        const { players, config } = get();
         const active = players.filter((p) => p.status === 'active').length;
         if (active < APP_DEFAULTS.minPlayers) return;
-        set({ status: 'running' });
+        // Defensive parity / range guard on targetTotal: the Setup
+        // points stepper allows free-form typing and snaps on blur,
+        // but a host who taps "Start session" without leaving the
+        // input first can ship a dirty value (e.g. typed "27" then
+        // tapped Start directly). Re-running `normalisePointsPerGame`
+        // here guarantees every running session starts with an even,
+        // in-bounds target — sum scoring requires it for the slider
+        // midpoint to land on an integer.
+        const safeTarget = normalisePointsPerGame(config.targetTotal);
+        const nextConfig =
+          safeTarget !== config.targetTotal
+            ? { ...config, targetTotal: safeTarget }
+            : config;
+        set({ status: 'running', config: nextConfig });
       },
 
       generateNextRound: () => {

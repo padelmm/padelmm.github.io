@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 interface Props {
   value: number;
   min: number;
@@ -7,12 +9,15 @@ interface Props {
    * the "even-only" points stepper (step=2) and the "one court at a
    * time" courts stepper (step=1). Always positive; the component
    * computes the signed delta internally.
+   *
+   * Also drives the parity / multiplicity snap when a user types a
+   * value directly into the middle input — any input that doesn't
+   * land on a `step` boundary is snapped to the nearest valid one
+   * inside [min, max] on commit (blur / Enter).
    */
   step?: number;
   onChange: (next: number) => void;
-  /** Optional ID for screen readers / labels. */
   id?: string;
-  /** Optional ARIA label describing what's being stepped (e.g. "Points per game"). */
   'aria-label'?: string;
   /**
    * Optional unit shown beside the value (e.g. "pts", "courts"). Pure
@@ -23,20 +28,37 @@ interface Props {
 }
 
 /**
- * `−  N  +` stepper, visually matching the score-card +/− buttons on
- * the Round screen. Used in the Setup screen for both the points-per-
- * game custom input and the courts picker so the two controls feel
- * like one consistent family.
+ * Clamp + multiplicity-snap a raw number to the stepper's bounds.
+ * Returns the nearest valid value inside [min, max] that is a
+ * multiple of `step` (counting from `min`, so a stepper with min=6
+ * step=2 produces 6, 8, 10, … even if min itself isn't a step
+ * multiple of zero).
+ */
+function snap(n: number, min: number, max: number, step: number): number {
+  if (!Number.isFinite(n)) return min;
+  const lower = Math.max(min, Math.min(max, n));
+  const offset = lower - min;
+  const snappedOffset = Math.round(offset / step) * step;
+  const snapped = min + snappedOffset;
+  return Math.max(min, Math.min(max, snapped));
+}
+
+/**
+ * `−  N  +` stepper with a directly typeable middle field.
  *
- * Behaviour notes:
- *  - Clamps at `min` / `max` and disables the corresponding button at
- *    the edges (mirrors the score buttons disabling at 0 / target).
- *  - Steps by `step` (default 1). Pressing − at value `min+step-1`
- *    snaps back to `min` rather than going below it; same logic on
- *    the upper edge.
- *  - The big central number uses the `lcd-num` utility so it gets
- *    the same monospace + glow treatment as scores elsewhere — the
- *    glow gracefully fades in light mode via the index.css overrides.
+ * Usage model:
+ *  - Tap +/− to nudge by `step`. Edges disable the corresponding
+ *    button (so the score-card "can't go below 0 / above target"
+ *    feel is preserved).
+ *  - Tap the centre value to focus and type a new number directly.
+ *    Free-form typing is allowed (the host can erase to nothing
+ *    before retyping) — the committed value is parsed and snapped to
+ *    a valid step multiple on blur / Enter.
+ *
+ * Visual styling matches the score-card buttons on the Round screen
+ * (rounded-full `+`/`-`, lcd-num readout in cyan). The readout
+ * shares the `.lcd-num` utility which gets its glow trimmed in
+ * light mode via the index.css overrides.
  */
 export default function NumberStepper({
   value,
@@ -51,6 +73,31 @@ export default function NumberStepper({
   const clamped = Math.max(min, Math.min(max, value));
   const atMin = clamped <= min;
   const atMax = clamped >= max;
+
+  // Local draft string for the input, so the user can transiently
+  // hold partial values like "" or "1" without us aggressively
+  // snapping back. Kept in sync with the external `value` whenever
+  // the parent changes it (e.g. +/− buttons elsewhere) but NOT
+  // overwritten by every keystroke.
+  const [draft, setDraft] = useState<string>(String(clamped));
+
+  useEffect(() => {
+    setDraft(String(clamped));
+    // We intentionally key only on `value`; the draft is owned by the
+    // user while typing and should not bounce around as min/max
+    // change (those don't realistically change during a session).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
+  const commitDraft = () => {
+    const parsed = parseInt(draft, 10);
+    const next = snap(parsed, min, max, step);
+    // Always overwrite the draft so the user sees the snapped value
+    // (e.g. typing "27" with step=2 becomes "28") — this teaches the
+    // parity rule by example rather than failing silently.
+    setDraft(String(next));
+    if (next !== clamped) onChange(next);
+  };
 
   const dec = () => {
     if (atMin) return;
@@ -79,16 +126,41 @@ export default function NumberStepper({
       >
         −
       </button>
-      <div className="flex min-w-[5.5rem] items-baseline justify-center gap-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
-        <span className="lcd-num text-2xl font-bold text-cyan-300 tabular-nums">
-          {clamped}
-        </span>
+      <label className="flex min-w-[5.5rem] items-baseline justify-center gap-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          aria-label={ariaLabel ? `${ariaLabel} value` : 'Value'}
+          value={draft}
+          onChange={(e) => {
+            // Strip everything except digits as the host types. We
+            // don't snap mid-typing; the user might be on their way
+            // to a valid number and aggressive normalising would
+            // make the field jumpy.
+            const cleaned = e.target.value.replace(/[^0-9]/g, '');
+            setDraft(cleaned);
+          }}
+          onBlur={commitDraft}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.currentTarget.blur();
+            } else if (e.key === 'Escape') {
+              setDraft(String(clamped));
+              e.currentTarget.blur();
+            }
+          }}
+          // Width sized for two digits + unit so 6→98 doesn't reflow
+          // the row. `text-center` keeps the number visually
+          // anchored regardless of digit count.
+          className="lcd-num w-12 bg-transparent text-center text-2xl font-bold text-cyan-300 tabular-nums caret-cyan-400 focus:outline-none"
+        />
         {unit && (
           <span className="text-[10px] uppercase tracking-wider text-slate-500">
             {unit}
           </span>
         )}
-      </div>
+      </label>
       <button
         type="button"
         onClick={inc}

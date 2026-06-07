@@ -307,12 +307,46 @@ textarea {
   background-color: rgba(15, 23, 42, 0.06);
 }
 
-/* Score-slider thumb has a hardcoded navy ring in dark mode; on a
- * light background the ring needs to flip to a pale neutral so the
- * thumb still pops off the track. */
-[data-theme='light'] .score-slider::-webkit-slider-thumb,
+/* Score-slider thumb in light mode:
+ *  - the navy ring flips to white so the thumb still reads as a ring;
+ *  - the coloured "halo" `box-shadow` (a CRT-style glow keyed to the
+ *    current intensity) becomes a smudge against the cream surface,
+ *    so we replace it with a soft neutral lift that gives the thumb
+ *    depth without colour bleed. The `inset` highlight is dropped on
+ *    webkit (it's a dark-mode flourish that gets lost on white). */
+[data-theme='light'] .score-slider::-webkit-slider-thumb {
+  border-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
 [data-theme='light'] .score-slider::-moz-range-thumb {
   border-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+}
+
+/* LCD digit "glow" suppression for the light theme.
+ *
+ * The `.lcd-num` utility wraps every score / round-number / stepper
+ * digit with `text-shadow: 0 0 6px currentColor, 0 0 14px
+ * currentColor;` — a classic CRT halo that's a hero element on the
+ * dark surface but turns into a colour smudge around bright orange /
+ * green digits on cream (visible field report: the 19 : 5 score and
+ * the Round number both went "blurish"). 1CD light mode doesn't
+ * use colour glow on text, so the cleanest move is to drop the
+ * shadow entirely and let the digit colour itself (already darkened
+ * via the --score-lightness var) carry the meaning. */
+[data-theme='light'] .lcd-num {
+  text-shadow: none;
+}
+
+/* Coloured halo Tailwind utilities (`shadow-lcd` cyan, `shadow-lcd-
+ * gold` gold) are layered on solid-colour buttons (Save score,
+ * Start session, segmented controls). The halo reads as LED light
+ * on dark surfaces; against cream it muddies the button edge with a
+ * colour bleed. Swap to a neutral elevation shadow so buttons keep
+ * the lift but lose the colour glow. */
+[data-theme='light'] .shadow-lcd,
+[data-theme='light'] .shadow-lcd-gold {
+  box-shadow: 0 4px 10px -4px rgba(15, 23, 42, 0.25);
 }
 
 /* Dark-coloured backgrounds used as inputs / disabled states / chips.
