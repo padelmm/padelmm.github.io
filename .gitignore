@@ -26,9 +26,15 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
-.cursor/
 *.swp
 *.swo
+
+# Cursor IDE — ignore personal state (mcp.json, history, etc.) but
+# keep project-scoped skills tracked so they travel with the repo.
+# Important: ignore the *contents* of .cursor/, not the directory
+# itself, so the negation below can re-include the skills subtree.
+/.cursor/*
+!/.cursor/skills/
 
 # TypeScript incremental build cache
 *.tsbuildinfo

@@ -87,7 +87,7 @@ export default function Splash({
           {buttonLabel}
         </button>
         <p className="mt-3 text-center text-[10px] uppercase tracking-widest text-slate-500">
-          v0.1 · offline-first · no accounts
+          v{__APP_VERSION__} · offline-first · no accounts
         </p>
 
         {showFeedback && (

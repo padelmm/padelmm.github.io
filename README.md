@@ -298,6 +298,30 @@ npm run typecheck  # tsc --noEmit only
 For Pages deployment to work, the repo's **Settings → Pages → Source**
 must be set to **GitHub Actions**.
 
+### Versioning
+
+The app uses [Semantic Versioning](https://semver.org/) — the source of
+truth is `package.json#version`, surfaced into the About panel at build
+time via `__APP_VERSION__` (see `vite.config.ts`).
+
+- **PATCH** for bug fixes only.
+- **MINOR** for new features — *batched per "day's work"* into a single
+  release, not bumped per commit.
+- **MAJOR** reserved for `1.0.0` (stable schema + IA) or any breaking
+  change to the share-code format.
+
+See [`CHANGELOG.md`](./CHANGELOG.md) for what shipped in each release,
+and the `.cursor/skills/versioning-and-releases/` skill for the full
+workflow.
+
+### Project skills
+
+The repo ships three [Cursor Agent
+Skills](https://docs.cursor.com/) under `.cursor/skills/` that
+document maintenance-critical knowledge: the Blue Lions design system,
+the versioning workflow, and the overall app architecture. Any agent
+working in this repo can read them; humans are also welcome.
+
 ---
 
 ## Credits & License

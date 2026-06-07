@@ -187,6 +187,10 @@ export default function SessionMenu() {
         {importOpen && <ImportSessionForm onImported={() => setImportOpen(false)} />}
       </section>
 
+      <h2 className="mt-2 px-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+        Session control
+      </h2>
+
       {status === 'running' && (
         <button
           type="button"
@@ -246,6 +250,10 @@ export default function SessionMenu() {
         Everything is stored only on this phone. Nothing is uploaded. Use Share above to
         hand off mid-session.
       </p>
+
+      <h2 className="mt-2 px-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
+        Preferences
+      </h2>
 
       <button
         type="button"
