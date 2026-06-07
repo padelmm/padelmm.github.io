@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { APP_DEFAULTS, defaultSessionConfig } from './defaults';
+import {
+  APP_DEFAULTS,
+  defaultSessionConfig,
+  normalisePointsPerGame,
+} from './defaults';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
 import type { Game, Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
@@ -16,7 +20,7 @@ import type { Game, Player, PlayerId, PlayerStatus, Round, SessionState } from '
  *            field types didn't change so v1 payloads load as-is;
  *            we just rewrite the version number.
  */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const STORAGE_KEY = 'padel-mm:session-v1';
 const INTRO_STORAGE_KEY = 'padel-mm:intro-seen-v1';
 
@@ -466,6 +470,21 @@ export const useSession = create<SessionStore>()(
             config: {
               ...defaultSessionConfig(),
               ...(persisted.config ?? {}),
+            },
+          };
+        }
+
+        // v2 → v3: the Custom-points input in v0.3.0 used step=1, so
+        // hosts could persist odd `targetTotal` values like 25 or 27.
+        // Sum-scoring requires an even target; snap any existing odd
+        // value to the nearest valid even number inside the bounds.
+        if (fromVersion < 3) {
+          const cfg = migrated.config ?? defaultSessionConfig();
+          migrated = {
+            ...migrated,
+            config: {
+              ...cfg,
+              targetTotal: normalisePointsPerGame(cfg.targetTotal),
             },
           };
         }

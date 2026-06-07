@@ -19,6 +19,62 @@ automated test harness.
 
 ---
 
+## [0.3.1] — 2026-06-07
+
+Polish patch off the v0.3.0 launch. Six visual / UX bugs raised by the
+first round of light-mode field testing — no behavioural changes to
+match logic, ranking, or share codes.
+
+### Changed
+- **Setup screen — Points per game**: enforced even-only values
+  (`step=2`, range `6–98`). The previous `step=1` let through odd
+  totals like 25 / 27 which can't split into two whole-number halves
+  (the slider midpoint expects `target / 2`). Schema migrated v2 → v3
+  with `normalisePointsPerGame()` snapping any odd persisted target
+  to the nearest valid even value.
+- **Setup screen — Number of courts**: replaced the 1–4 segmented
+  control with a `−  N  +` stepper bounded to `1–12` (default 3) so
+  larger tournaments aren't blocked by the picker.
+- **Setup screen — Custom points**: replaced the typed-number input
+  with the same `−  N  +` stepper, matching the score-card `+`
+  buttons on the Round screen. Both stepper rows now share an
+  identical layout (label left, stepper right) so the section reads
+  as one consistent settings family.
+- **Round on session start**: forced `tab='play'` on the
+  `setup → running` transition so opening "New mix & match" from the
+  Session tab no longer leaves the host on Session when the new
+  round is generated. Implemented via a `useRef`-tracked previous
+  status in `App.tsx`.
+
+### Fixed
+- **Top-bar logo in light mode**: `AppHeader` was hardcoded to
+  `/bl-logo.png` (cyan-on-navy badge); now mirrors the Splash logic
+  and swaps to `/bl-logo-light.png` when the resolved theme is
+  light. Setup header logo also picked up the same swap.
+- **Light-mode contrast — disabled buttons**: the `Add N more
+  players` and `Save score` buttons were mid-gray text on a
+  mid-gray fill. Tailwind emits `disabled:bg-slate-700/60` as a
+  separate higher-specificity class (`.disabled\:bg-slate-700\/60`
+  with the `:disabled` pseudo) that the prior `[data-theme='light']
+  .bg-slate-700/60` rule didn't catch. Added dedicated overrides
+  to lift the fill to 14% ink and the label to `1CD neutral.600`.
+- **Light-mode contrast — player chips inside Round/Team cards**:
+  chips used `text-cyan-100` / `text-amber-100` which mapped to
+  near-white on the cyan/amber tinted backgrounds. Extended the
+  accent-text overrides to cover the full `100 / 200 / 300` ladder
+  plus every opacity modifier in use (`/60`, `/80`, `/90`) for
+  cyan / amber / yellow / emerald / rose families. Now read
+  cleanly on cream.
+- **Light-mode contrast — score digits (the "12:12" complaint)**:
+  the LCD digit colour was `hsl(hue, 85%, 62%)` regardless of
+  theme — designed for dark surfaces. Introduced
+  `--score-saturation` / `--score-lightness` CSS variables that
+  drive `scoreColor()` / `intensityColor()`. Light mode now uses
+  `35%` lightness / `88%` saturation so the cyan → yellow → red
+  gradient survives on white without going pastel.
+
+---
+
 ## [0.3.0] — 2026-06-07
 
 Focus of this release: a light theme grounded in the One Cisco Design

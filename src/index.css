@@ -4,6 +4,12 @@
 
 :root {
   color-scheme: dark;
+  /* Drive the LCD digit colour formula (see `lib/score-color.ts`). The
+   * digits use `hsl(hue, var(--score-saturation), var(--score-lightness))`
+   * so the theme system can darken them on the light surface without
+   * touching every call site or losing the cyan→yellow→red gradient. */
+  --score-saturation: 85%;
+  --score-lightness: 62%;
 }
 
 html,
@@ -72,6 +78,11 @@ body::after {
  * --------------------------------------------------------------------- */
 
 [data-theme='light'] {
+  /* Darker, more saturated LCD digits on the cream surface. 35%
+   * lightness keeps the cyan/yellow/red gradient recognisable while
+   * still hitting WCAG 4.5:1 against the white-ish card. */
+  --score-saturation: 88%;
+  --score-lightness: 35%;
   color-scheme: light;
 }
 
@@ -210,18 +221,54 @@ textarea {
 
 /* Accent text colours need a darker, more saturated variant on light
  * backgrounds so they stay legible without losing semantic meaning.
- * Cyan/amber/rose tones are kept but pulled toward the 1CD darker
- * stops in each scale. */
+ * Cyan / amber / rose / yellow / emerald tones are kept but pulled
+ * toward the 1CD darker stops in each scale. We enumerate every
+ * shade variant used in JSX (100/200/300/etc) and their opacity
+ * modifiers (`/60`, `/80`, `/90` — Tailwind emits these as separate
+ * classes whose selector ends with `\/N` so we need explicit rules).
+ *
+ * Cyan family (player chips in Team A boxes, Round number, Resting
+ * badge subtitles, "Blue Lions" eyebrows, etc.). */
+[data-theme='light'] .text-cyan-100,
 [data-theme='light'] .text-cyan-200,
-[data-theme='light'] .text-cyan-300 {
+[data-theme='light'] .text-cyan-200\/90,
+[data-theme='light'] .text-cyan-300,
+[data-theme='light'] .text-cyan-300\/60,
+[data-theme='light'] .text-cyan-300\/80 {
   color: #027494; /* 1CD cyan.700 */
 }
-[data-theme='light'] .text-amber-300 {
+
+/* Amber/orange family (Team B chips, "avond" eyebrow, paused player
+ * status, History meta lines, score-toast amber state, etc.). */
+[data-theme='light'] .text-amber-100,
+[data-theme='light'] .text-amber-200,
+[data-theme='light'] .text-amber-200\/90,
+[data-theme='light'] .text-amber-300,
+[data-theme='light'] .text-amber-300\/60,
+[data-theme='light'] .text-amber-300\/80 {
   color: #a16205; /* 1CD orange.700 */
 }
 [data-theme='light'] .text-amber-500 {
   color: #d97a00; /* 1CD orange.600 */
 }
+
+/* Yellow family (SUM <target> chip on Round and History, the "vs"
+ * label on Final Round, etc.). Pulled to a deep amber so it reads as
+ * the same warm accent without being washed-out yellow on cream. */
+[data-theme='light'] .text-yellow-300,
+[data-theme='light'] .text-yellow-300\/80,
+[data-theme='light'] .text-yellow-400 {
+  color: #854d0e; /* 1CD orange.800 */
+}
+
+/* Emerald family (Saved badge, Active status, Game-saved button text). */
+[data-theme='light'] .text-emerald-200,
+[data-theme='light'] .text-emerald-300 {
+  color: #047857; /* 1CD semantic.success */
+}
+
+/* Rose family (Remove buttons, score-down arrow, error states). */
+[data-theme='light'] .text-rose-200,
 [data-theme='light'] .text-rose-300,
 [data-theme='light'] .text-rose-500 {
   color: #be185d; /* 1CD semantic.error */
@@ -293,9 +340,20 @@ textarea {
   background-color: rgba(15, 23, 42, 0.06);
 }
 
-/* Disabled-button text used `text-slate-500` which we already map to
- * a medium neutral above; the matching `disabled:bg-slate-700/60`
- * background is handled by the rule just above. */
+/* Disabled buttons: Tailwind emits `disabled:bg-slate-700/60` as the
+ * class `.disabled\:bg-slate-700\/60` with a `:disabled` pseudo on
+ * the selector — distinct from the unprefixed `.bg-slate-700/60`
+ * rule above and a higher specificity, so we need a dedicated
+ * override here. Lifting the fill to 14% ink (vs. 8% for the chip
+ * background) gives the button a clear "slate" feel without going
+ * fully dark, and the text bumps to a deeper neutral so the label
+ * stays comfortably above 3:1 contrast. */
+[data-theme='light'] .disabled\:bg-slate-700\/60:disabled {
+  background-color: rgba(15, 23, 42, 0.14);
+}
+[data-theme='light'] .disabled\:text-slate-500:disabled {
+  color: #475569; /* 1CD neutral.600 */
+}
 
 /* Subtle ring colours used on the rank-pill (and other chips) need
  * the same dark/light inversion as the borders. */

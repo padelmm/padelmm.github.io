@@ -2,6 +2,12 @@
  * Map a single team's score in [0, target] to a colour along a
  * cyan → yellow → red gradient. Used for the digit colours: 0 looks
  * cool, 24 looks hot, 12 sits at the warm middle.
+ *
+ * Saturation and lightness are delegated to CSS custom properties so
+ * the theme system can darken the digits on the light surface (where
+ * the dark-mode `62%` lightness washes out, especially the yellow
+ * midpoint). Defaults match the dark-mode look so callers / tests
+ * don't have to set the variables themselves.
  */
 export function scoreColor(score: number, target: number): string {
   const safeTarget = target > 0 ? target : 1;
@@ -14,7 +20,7 @@ export function scoreColor(score: number, target: number): string {
   } else {
     hue = 50 - 50 * ((t - 0.5) * 2);
   }
-  return `hsl(${hue.toFixed(0)}, 85%, 62%)`;
+  return `hsl(${hue.toFixed(0)}, var(--score-saturation, 85%), var(--score-lightness, 62%))`;
 }
 
 /**
@@ -42,5 +48,5 @@ export function intensityColor(scoreA: number, target: number): string {
   } else {
     hue = 50 - 50 * ((distance - 0.5) * 2);
   }
-  return `hsl(${hue.toFixed(0)}, 85%, 62%)`;
+  return `hsl(${hue.toFixed(0)}, var(--score-saturation, 85%), var(--score-lightness, 62%))`;
 }

@@ -54,17 +54,25 @@ export const APP_DEFAULTS = {
    * Options shown in the Setup screen segmented control. The selected
    * value writes through to `SessionConfig.targetTotal`. "Custom" is
    * rendered automatically alongside these in the UI.
+   *
+   * MUST be even values — the score model splits points between two
+   * teams and the central balance point (12:12 for 24, etc.) is the
+   * slider midpoint. Hardcoded options are vetted; the custom
+   * stepper enforces the same parity rule.
    */
   pointsPerGameOptions: [16, 24, 32] as const,
 
   /**
-   * Lower / upper bound for the "Custom" points input. 6 lets a host
-   * run a quick 6-point shoot-out tiebreaker; 99 covers any sane
-   * long-format game while still fitting in two digits everywhere
-   * the UI renders a score.
+   * Lower / upper bound + step for the "Custom" points stepper.
+   * Even-only by design: 6 lets a host run a quick 6-point shoot-out
+   * tiebreaker, 98 covers any sane long-format game while fitting in
+   * two digits. Step of 2 keeps every value an integer split of two
+   * teams (sum-to-target with both halves being whole numbers when
+   * the target is even).
    */
   pointsPerGameMin: 6,
-  pointsPerGameMax: 99,
+  pointsPerGameMax: 98,
+  pointsPerGameStep: 2,
 
   // --- Court layout ------------------------------------------------------
 
@@ -72,12 +80,14 @@ export const APP_DEFAULTS = {
   courts: 3,
 
   /**
-   * Choices shown in the Setup screen courts picker. Capped at 4
-   * because the player limit (16) divides into at most 4 four-person
-   * courts; bump this AND `maxPlayers` together to support larger
-   * tournaments.
+   * Inclusive bounds for the courts stepper in Setup. Twelve courts
+   * × 4 players = 48 = a generously big club night; small tournaments
+   * usually use 2–4. The actual courts played each round is capped at
+   * `min(maxCourts, floor(activePlayers / 4))`, so picking 12 with
+   * only 8 players just means the generator uses 2 of them.
    */
-  courtsOptions: [1, 2, 3, 4] as const,
+  courtsMin: 1,
+  courtsMax: 12,
 
   // --- Tournament format -------------------------------------------------
 
@@ -107,7 +117,7 @@ export const APP_DEFAULTS = {
    * courts of doubles; raising this requires also bumping
    * `courtsOptions` so all players can be put on a court.
    */
-  maxPlayers: 16,
+  maxPlayers: 80,
 
   // --- Manual game entry -------------------------------------------------
 
@@ -136,14 +146,31 @@ export function defaultSessionConfig(): SessionConfig {
 /**
  * Type-narrowing helper: validate that an incoming `pointsPerGame`
  * value (either from a UI control or a migrated session) is inside
- * the allowed range. Used by `setConfig` callers to avoid persisting
- * a 0 or NaN.
+ * the allowed range and matches the step (i.e. is even). Used by
+ * `setConfig` callers to avoid persisting a 0, an odd target, or
+ * NaN.
  */
 export function isValidPointsPerGame(n: number): boolean {
   return (
     Number.isFinite(n) &&
+    Number.isInteger(n) &&
     n >= APP_DEFAULTS.pointsPerGameMin &&
     n <= APP_DEFAULTS.pointsPerGameMax &&
-    Number.isInteger(n)
+    n % APP_DEFAULTS.pointsPerGameStep === 0
+  );
+}
+
+/**
+ * Clamp + parity-correct a raw points-per-game value (e.g. typed
+ * into a stepper or migrated from a pre-step-2 schema). Snaps to
+ * the nearest even value inside [min, max].
+ */
+export function normalisePointsPerGame(n: number): number {
+  if (!Number.isFinite(n)) return APP_DEFAULTS.pointsPerGame;
+  const step = APP_DEFAULTS.pointsPerGameStep;
+  const snapped = Math.round(n / step) * step;
+  return Math.max(
+    APP_DEFAULTS.pointsPerGameMin,
+    Math.min(APP_DEFAULTS.pointsPerGameMax, snapped),
   );
 }

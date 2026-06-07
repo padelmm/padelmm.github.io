@@ -1,7 +1,7 @@
 {
   "name": "padel-mix-match",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Mix & Match for padel evenings — by Alex K. Mobile-first PWA to run a Padel Mix & Match session.",
   "author": "Alex K (https://github.com/sedoychel)",

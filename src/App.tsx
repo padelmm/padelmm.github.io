@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Setup from './components/Setup';
 import Play from './components/Play';
 import Players from './components/Players';
@@ -24,10 +24,28 @@ export default function App() {
   const status = useSession((s) => s.status);
   const [tab, setTab] = useState<Tab>('play');
   const [showSplash, setShowSplash] = useState<boolean>(false);
+  /**
+   * Track the previous session status so we can spot the `setup →
+   * running` transition. Without this, picking "New mix & match"
+   * from the Session tab leaves `tab='session'` in local state; the
+   * setup screen ignores tab so the host doesn't notice, but the
+   * first running render lands back on Session instead of Round.
+   * Snapping to 'play' on the transition makes the new session
+   * always open on the round-card view, which is where setup
+   * actions feed into.
+   */
+  const prevStatus = useRef(status);
 
   useEffect(() => {
     setShowSplash(!introStorage.has());
   }, []);
+
+  useEffect(() => {
+    if (prevStatus.current === 'setup' && status === 'running') {
+      setTab('play');
+    }
+    prevStatus.current = status;
+  }, [status]);
 
   if (showSplash) {
     return (
