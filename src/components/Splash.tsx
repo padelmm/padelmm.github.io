@@ -1,3 +1,6 @@
+import { useTheme } from '../lib/use-theme';
+import { useSession } from '../lib/store';
+
 /**
  * Direct deep-link to the Feedback issue template. Kept here (not in
  * env or remote config) on purpose: this is a public OSS repo, the URL
@@ -47,6 +50,19 @@ export default function Splash({
   buttonLabel = 'Tap to start',
   showFeedback = false,
 }: Props) {
+  // Pull the resolved theme so we can swap to the navy-on-white logo
+  // when the user has chosen (or the OS prefers) light mode. The cyan
+  // halo also gets toned down in light mode — at full strength on a
+  // white background it looks like a smudge, not a glow.
+  const { resolved } = useTheme();
+  const isLight = resolved === 'light';
+
+  // Tagline pulls the active target total from config so the welcome
+  // line always tells the truth — first-run users see the default
+  // (24), customised sessions see their own value, and a fresh
+  // installation never advertises a number we no longer use.
+  const targetTotal = useSession((s) => s.config.targetTotal);
+
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 pb-10 pt-[max(env(safe-area-inset-top),2.5rem)]">
       <div className="flex-1" />
@@ -55,12 +71,20 @@ export default function Splash({
         <div className="relative grid h-44 w-44 place-items-center">
           <div
             aria-hidden
-            className="absolute inset-0 rounded-full bg-cyan-400/15 blur-3xl"
+            className={
+              'absolute inset-0 rounded-full blur-3xl ' +
+              (isLight ? 'bg-cyan-400/8' : 'bg-cyan-400/15')
+            }
           />
           <img
-            src="/bl-logo.png"
+            src={isLight ? '/bl-logo-light.png' : '/bl-logo.png'}
             alt="Blue Lions logo"
-            className="relative h-40 w-40 object-contain drop-shadow-[0_0_24px_rgba(34,211,238,0.4)]"
+            className={
+              'relative h-40 w-40 object-contain ' +
+              (isLight
+                ? 'drop-shadow-[0_4px_16px_rgba(15,23,42,0.15)]'
+                : 'drop-shadow-[0_0_24px_rgba(34,211,238,0.4)]')
+            }
             draggable={false}
           />
         </div>
@@ -74,7 +98,7 @@ export default function Splash({
         </div>
 
         <p className="px-2 text-center text-sm text-slate-400">
-          Random teams. Scores to 24. Live ranking — all on this phone.
+          Random teams. Scores to {targetTotal}. Live ranking — all on this phone.
         </p>
       </div>
 

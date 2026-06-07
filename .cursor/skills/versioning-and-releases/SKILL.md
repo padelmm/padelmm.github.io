@@ -13,11 +13,11 @@ bundle at build time via `__APP_VERSION__` (see `vite.config.ts`).
 
 While in the `0.x.y` line:
 
-| Bump      | When to use it |
-|-----------|----------------|
-| **PATCH** (`0.2.0` → `0.2.1`) | Bug fixes only. No new user-visible features, no schema changes. |
+| Bump                          | When to use it                                                                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **PATCH** (`0.2.0` → `0.2.1`) | Bug fixes only. No new user-visible features, no schema changes.                                                                                         |
 | **MINOR** (`0.2.0` → `0.3.0`) | New features, UX changes, refactors. Backward-compatible session imports. **Batch multiple features per minor — a "day's work" maps to one minor bump.** |
-| **MAJOR** (`0.x.y` → `1.0.0`) | First "stable" release: data schema and IA frozen. Or: an export from an older minor cannot be imported. |
+| **MAJOR** (`0.x.y` → `1.0.0`) | First "stable" release: data schema and IA frozen. Or: an export from an older minor cannot be imported.                                                 |
 
 The project explicitly batches features. Don't bump twice in one day for
 related work — accumulate the changes in `## [Unreleased]` then promote

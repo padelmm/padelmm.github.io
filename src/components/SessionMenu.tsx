@@ -4,6 +4,7 @@ import { copyToClipboard, exportSession, type ExportResult } from '../lib/share'
 import { usePwa } from '../lib/pwa';
 import ImportSessionForm from './ImportSessionForm';
 import Splash from './Splash';
+import ThemeToggle from './ThemeToggle';
 
 export default function SessionMenu() {
   const status = useSession((s) => s.status);
@@ -254,6 +255,8 @@ export default function SessionMenu() {
       <h2 className="mt-2 px-1 text-[10px] uppercase tracking-[0.2em] text-slate-400">
         Preferences
       </h2>
+
+      <ThemeToggle />
 
       <button
         type="button"

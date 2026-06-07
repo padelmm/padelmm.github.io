@@ -3,7 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
-    <meta name="theme-color" content="#0c1a36" />
+    <!--
+      Two media-scoped theme-color tags so the iOS / Android browser
+      chrome matches the OS theme on first paint, before any JS runs.
+      Once `applyTheme()` resolves the user's stored preference it
+      injects a third (unscoped) tag at higher precedence to pin the
+      chrome to the explicit choice.
+    -->
+    <meta name="theme-color" content="#ebeef2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c1a36" media="(prefers-color-scheme: dark)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Padel M&M" />

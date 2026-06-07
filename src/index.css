@@ -51,6 +51,64 @@ body::after {
   mix-blend-mode: overlay;
 }
 
+/* -----------------------------------------------------------------------
+ * Light theme overrides.
+ *
+ * The app's baseline is the dark theme — every component class above
+ * (and every Tailwind utility we use) targets dark surfaces by
+ * default. The light theme is layered in as a set of CSS overrides
+ * scoped under `[data-theme='light']`, so existing JSX needs no
+ * `dark:` prefix sweep.
+ *
+ * Surface tokens (`.glass`, `.glass-strong`) follow the canonical 1CD
+ * Glass Visual Lever spec for light mode (level-2 default):
+ *   --glass-bg-light:     rgba(255, 255, 255, 0.7)
+ *   --glass-blur:         20px
+ *   --glass-saturation:   180%
+ *   --glass-border-light: rgba(255, 255, 255, 0.3)
+ *
+ * Source: One Cisco Design System — Zen Garden Validated Glass spec
+ * (project-0-MixAndMatch-cisco-design-system MCP, version 3.0).
+ * --------------------------------------------------------------------- */
+
+[data-theme='light'] {
+  color-scheme: light;
+}
+
+[data-theme='light'] html,
+[data-theme='light'] body,
+[data-theme='light'] #root {
+  /* Neutral text near-black (1CD neutral.900). Body copy stays legible
+   * on the warm-white background below; semantic accents (cyan, rose,
+   * amber) keep their original hue. */
+  color: #020b14;
+}
+
+[data-theme='light'] body {
+  /* Soft cream-to-mist background with the same Blue Lions cyan/gold
+   * accent points used in dark mode, just at higher opacity so they
+   * read against white. Anchored to 1CD neutral.100 (#ebeef2). */
+  background-color: #ebeef2;
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(0, 200, 255, 0.12), transparent 55%),
+    radial-gradient(circle at 80% 100%, rgba(240, 187, 29, 0.08), transparent 55%),
+    linear-gradient(180deg, #ffffff 0%, #ebeef2 100%);
+}
+
+/* Scanline overlay needs inverting for light backgrounds — flip from
+ * white-overlay to slate-multiply so the lines remain barely-there
+ * texture rather than turning into dark stripes. */
+[data-theme='light'] body::after {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(15, 23, 42, 0.02) 0px,
+    rgba(15, 23, 42, 0.02) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
 #root {
   position: relative;
   z-index: 1;
@@ -100,6 +158,149 @@ textarea {
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light-mode Glass — 1CD canonical level-2 (default) and level-3 (strong).
+ * Background is a solid translucent white (NOT a gradient like the dark
+ * variant); the saturated, heavier blur is what gives the frosted look. */
+[data-theme='light'] .glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 6px 20px -8px rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(25px) saturate(180%);
+  -webkit-backdrop-filter: blur(25px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 6px 20px -8px rgba(15, 23, 42, 0.18);
+}
+
+/* Map the slate text scale to the 1CD neutral scale so existing JSX
+ * using Tailwind text colours keeps working in light mode with proper
+ * contrast. Selector specificity (0,2,0) beats Tailwind's (0,1,0) so
+ * `!important` is not needed. The mapping deliberately compresses the
+ * scale: light surfaces don't carry as much dynamic range as the
+ * navy/slate gradient does in dark mode.
+ *
+ *   text-slate-50/100/200  -> near-black ink   (#020b14 / #122133)
+ *   text-slate-300/400/500 -> medium neutrals  (#293f59 / #5b718c)
+ */
+[data-theme='light'] .text-slate-50,
+[data-theme='light'] .text-slate-100,
+[data-theme='light'] .text-slate-200 {
+  color: #020b14;
+}
+[data-theme='light'] .text-slate-300 {
+  color: #122133;
+}
+[data-theme='light'] .text-slate-400 {
+  color: #293f59;
+}
+[data-theme='light'] .text-slate-500 {
+  color: #5b718c;
+}
+
+/* Accent text colours need a darker, more saturated variant on light
+ * backgrounds so they stay legible without losing semantic meaning.
+ * Cyan/amber/rose tones are kept but pulled toward the 1CD darker
+ * stops in each scale. */
+[data-theme='light'] .text-cyan-200,
+[data-theme='light'] .text-cyan-300 {
+  color: #027494; /* 1CD cyan.700 */
+}
+[data-theme='light'] .text-amber-300 {
+  color: #a16205; /* 1CD orange.700 */
+}
+[data-theme='light'] .text-amber-500 {
+  color: #d97a00; /* 1CD orange.600 */
+}
+[data-theme='light'] .text-rose-300,
+[data-theme='light'] .text-rose-500 {
+  color: #be185d; /* 1CD semantic.error */
+}
+
+/* The bottom tab-bar and a few panels use `bg-bl-navy/85` (a dark
+ * navy at ~85% opacity) as a translucent chrome surface in dark
+ * mode. In light mode we swap to translucent white so the tab bar
+ * doesn't punch a dark hole through the page. */
+[data-theme='light'] .bg-bl-navy\/85 {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+[data-theme='light'] .bg-bl-navy\/95 {
+  background-color: rgba(255, 255, 255, 0.95);
+}
+[data-theme='light'] .bg-bl-navy\/90 {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+/* Borders carrying white at low opacity disappear on light surfaces,
+ * so flip them to dark at the same opacity to preserve hairline
+ * dividers (tab bar top edge, sectioned cards, list rows, etc.). */
+[data-theme='light'] .border-white\/5,
+[data-theme='light'] .border-white\/10,
+[data-theme='light'] .border-white\/15,
+[data-theme='light'] .border-white\/20 {
+  border-color: rgba(15, 23, 42, 0.1);
+}
+
+/* Same idea for translucent white fills used as subtle backgrounds —
+ * map them to translucent ink so the visual hierarchy survives. */
+[data-theme='light'] .bg-white\/5 {
+  background-color: rgba(15, 23, 42, 0.04);
+}
+[data-theme='light'] .bg-white\/10 {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+
+/* Score-slider thumb has a hardcoded navy ring in dark mode; on a
+ * light background the ring needs to flip to a pale neutral so the
+ * thumb still pops off the track. */
+[data-theme='light'] .score-slider::-webkit-slider-thumb,
+[data-theme='light'] .score-slider::-moz-range-thumb {
+  border-color: #ffffff;
+}
+
+/* Dark-coloured backgrounds used as inputs / disabled states / chips.
+ * Left at their original navy these punch dark holes through the
+ * cream page; remapped to translucent ink so they remain visible but
+ * sit naturally on top of the light surface.
+ *
+ *   bg-black/30, bg-black/40  -> input + textarea backgrounds
+ *   bg-slate-700/40, /60      -> disabled button backgrounds, chips
+ *   bg-slate-400/20           -> rank-pill neutral background
+ */
+[data-theme='light'] .bg-black\/30 {
+  background-color: rgba(15, 23, 42, 0.04);
+}
+[data-theme='light'] .bg-black\/40 {
+  background-color: rgba(15, 23, 42, 0.05);
+}
+[data-theme='light'] .bg-slate-700\/40 {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+[data-theme='light'] .bg-slate-700\/60 {
+  background-color: rgba(15, 23, 42, 0.08);
+}
+[data-theme='light'] .bg-slate-400\/20 {
+  background-color: rgba(15, 23, 42, 0.06);
+}
+
+/* Disabled-button text used `text-slate-500` which we already map to
+ * a medium neutral above; the matching `disabled:bg-slate-700/60`
+ * background is handled by the rule just above. */
+
+/* Subtle ring colours used on the rank-pill (and other chips) need
+ * the same dark/light inversion as the borders. */
+[data-theme='light'] .ring-slate-600\/40 {
+  --tw-ring-color: rgba(15, 23, 42, 0.12);
 }
 
 /* Range slider styling.

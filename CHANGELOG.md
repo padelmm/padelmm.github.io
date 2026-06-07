@@ -14,9 +14,72 @@ running an older minor version may not understand a newer code.
 
 ## [Unreleased]
 
-Nothing yet. Items being scoped: light theme, configurable tournament
-points, manual game add, Mexicano + Mix Americano formats, automated
-test harness.
+Nothing yet. Items being scoped: Mexicano + Mix Americano formats,
+automated test harness.
+
+---
+
+## [0.3.0] — 2026-06-07
+
+Focus of this release: a light theme grounded in the One Cisco Design
+system spec, a single source of truth for app defaults, configurable
+points per game, and a manual-game-entry path on the History tab.
+
+### Added
+- **Light theme** — full Auto / Light / Dark control under
+  Preferences. Light surfaces use the canonical 1CD Glass tokens
+  (`rgba(255,255,255,0.7)`, `blur(20px) saturate(180%)`) fetched
+  directly from the One Cisco Design System MCP. Dark theme is the
+  default and the original baseline; light is layered in as a
+  `[data-theme='light']` override so no component JSX needed
+  prefixing. Includes:
+  - Logo swap to `bl-logo-light.png` (navy-on-white) in light mode.
+  - Dual `<meta name="theme-color">` tags so the iOS / Android browser
+    chrome matches before JS runs; pinned to the explicit choice after
+    `applyTheme` resolves.
+  - Theme persistence per phone, OS-change subscription when in Auto.
+- **Configurable points per game** — `Setup` now exposes a segmented
+  16 / 24 / 32 / Custom control, with the Custom input accepting any
+  integer between `APP_DEFAULTS.pointsPerGameMin` and
+  `pointsPerGameMax`. Score slider, score colour ramp, history
+  rendering, and the Round-tab "sum N" label all derive from
+  `config.targetTotal`, which is seeded from the central defaults.
+- **Manual game entry** — `+ Add game` button on every round in the
+  History tab. Opens a bottom sheet with team A / team B player
+  pickers, a live ScoreSlider tied to the configured target, and an
+  immediate save. New games are marked `recorded: true` and counted
+  toward ranking. Court number auto-advances past the last court used
+  in the round so manual entries don't collide with auto-generated
+  ones.
+- **`src/lib/defaults.ts`** — single source of truth for every "what
+  should this start at?" value in the app: theme, points per game
+  (with options + min / max), courts (with options), tournament type,
+  player limits, round-generation rules, manual-game initial split.
+  Used by `defaultState()` in the store, by the Setup UI, by the
+  theme helper, and exposed for future PRD work (Mexicano /
+  Mix Americano formats can change the tournament default without
+  hunting magic numbers).
+- **Schema migration** — bumped `SCHEMA_VERSION` to 2 with a
+  forward-only migrator that backfills any missing config fields from
+  the defaults. Existing v1 sessions on disk continue to load with no
+  data loss.
+
+### Changed
+- **Splash tagline** is now dynamic — reads `config.targetTotal` so
+  "Scores to 24" becomes "Scores to 16" / "32" / etc. depending on
+  what the host has configured. First-run users see the default
+  (24) unchanged.
+- **Setup screen** reflects all centralised defaults on first paint:
+  points selected at 24, courts selected at 3, player counter capped
+  at 16 — all driven from `APP_DEFAULTS`, no literals.
+
+### Internal
+- Theme application is run synchronously in `main.tsx` before
+  `createRoot`, so the first paint never flashes between dark and
+  light. Idempotent so re-application from React effects is free.
+- `addGameToRound` action returns a tagged-union result
+  (`'round-not-found' | 'duplicate-player' | 'invalid-score'`) so the
+  History sheet can flash a useful notice on each failure mode.
 
 ---
 
@@ -113,6 +176,7 @@ the project moved to formal versioning.
 - Feedback channel piggybacks on GitHub's authentication for spam
   protection; no email address appears anywhere in the bundle.
 
-[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/padelmm/padelmm.github.io/releases/tag/v0.1.0

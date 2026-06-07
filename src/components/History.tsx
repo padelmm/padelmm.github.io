@@ -4,6 +4,7 @@ import { scoreColor } from '../lib/score-color';
 import type { Player, PlayerId } from '../lib/types';
 import ScoreSlider from './ScoreSlider';
 import PlayerSwapSheet from './PlayerSwapSheet';
+import AddGameSheet from './AddGameSheet';
 
 function nameOf(id: PlayerId, players: readonly Player[]): string {
   return players.find((p) => p.id === id)?.name ?? '?';
@@ -37,6 +38,7 @@ export default function History() {
   const [swapCtx, setSwapCtx] = useState<{ roundId: string; fromPlayerId: PlayerId } | null>(
     null,
   );
+  const [addGameRoundId, setAddGameRoundId] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const flash = (msg: string | null) => {
@@ -150,7 +152,7 @@ export default function History() {
               )}
 
               {r.games.length === 0 ? (
-                <p className="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] italic text-slate-500">
+                <p className="mb-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] italic text-slate-500">
                   No games in this round.
                 </p>
               ) : (
@@ -306,6 +308,21 @@ export default function History() {
                   })}
                 </ul>
               )}
+
+              {/*
+                Manual "+ Add game" affordance. Surfaces on every
+                round so a host can retroactively log a side-court
+                game that wasn't part of the auto-generated draw.
+                The sheet (mounted once at the page root) gets the
+                round id and handles everything else.
+              */}
+              <button
+                type="button"
+                onClick={() => setAddGameRoundId(r.id)}
+                className="mt-2 w-full rounded-lg border border-dashed border-white/15 bg-white/0 px-2 py-1.5 text-[11px] font-medium text-slate-400 transition active:scale-[0.99] hover:border-white/30 hover:bg-white/5 hover:text-slate-200"
+              >
+                + Add game
+              </button>
             </li>
           );
         })}
@@ -317,6 +334,14 @@ export default function History() {
         roundId={swapCtx?.roundId}
         onClose={() => setSwapCtx(null)}
         onSwap={onSwapChosen}
+      />
+
+      <AddGameSheet
+        roundId={addGameRoundId}
+        onClose={() => setAddGameRoundId(null)}
+        onResult={(message) => {
+          if (message) flash(message);
+        }}
       />
     </div>
   );

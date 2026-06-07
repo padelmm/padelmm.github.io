@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
+import { APP_DEFAULTS, isValidPointsPerGame } from '../lib/defaults';
 import ImportSessionForm from './ImportSessionForm';
 
 export default function Setup() {
@@ -13,12 +14,37 @@ export default function Setup() {
 
   const [name, setName] = useState('');
   const [importOpen, setImportOpen] = useState(false);
+  // Whether the "Custom" points form is expanded. We keep the
+  // temporary string in local state so the host can type freely (e.g.
+  // erase to nothing before retyping) without round-tripping through
+  // the persisted config on every keystroke.
+  const [customPointsOpen, setCustomPointsOpen] = useState(
+    !APP_DEFAULTS.pointsPerGameOptions.includes(
+      config.targetTotal as (typeof APP_DEFAULTS.pointsPerGameOptions)[number],
+    ),
+  );
+  const [customPointsDraft, setCustomPointsDraft] = useState(
+    String(config.targetTotal),
+  );
+
   const trimmed = name.trim();
   const duplicate = players.some(
     (p) => p.name.toLowerCase() === trimmed.toLowerCase() && trimmed.length > 0,
   );
-  const canAdd = trimmed.length > 0 && !duplicate && players.length < 16;
-  const canStart = players.length >= 4;
+  const canAdd =
+    trimmed.length > 0 && !duplicate && players.length < APP_DEFAULTS.maxPlayers;
+  const canStart = players.length >= APP_DEFAULTS.minPlayers;
+
+  const commitCustomPoints = () => {
+    const n = parseInt(customPointsDraft, 10);
+    if (isValidPointsPerGame(n)) {
+      setConfig({ targetTotal: n });
+    } else {
+      // Reset the draft to the last valid value so the user sees what
+      // the app is actually using rather than a stale invalid entry.
+      setCustomPointsDraft(String(config.targetTotal));
+    }
+  };
 
   const submit = () => {
     if (!canAdd) return;
@@ -93,8 +119,10 @@ export default function Setup() {
         {duplicate && trimmed.length > 0 && (
           <p className="mt-2 text-xs text-amber-300">Name already in the list.</p>
         )}
-        {players.length >= 16 && (
-          <p className="mt-2 text-xs text-amber-300">Maximum is 16 players.</p>
+        {players.length >= APP_DEFAULTS.maxPlayers && (
+          <p className="mt-2 text-xs text-amber-300">
+            Maximum is {APP_DEFAULTS.maxPlayers} players.
+          </p>
         )}
       </section>
 
@@ -102,8 +130,8 @@ export default function Setup() {
         <div className="mb-2 flex items-baseline justify-between">
           <h2 className="text-lg font-semibold">Players</h2>
           <span className="text-xs text-slate-400">
-            {players.length} / 16 · {Math.min(config.maxCourts, Math.floor(players.length / 4))}{' '}
-            courts
+            {players.length} / {APP_DEFAULTS.maxPlayers} ·{' '}
+            {Math.min(config.maxCourts, Math.floor(players.length / 4))} courts
           </span>
         </div>
         {players.length === 0 ? (
@@ -143,25 +171,90 @@ export default function Setup() {
 
       <section className="glass rounded-2xl p-4">
         <h2 className="text-sm font-semibold text-slate-300">Settings</h2>
-        <label className="mt-3 flex cursor-pointer items-center justify-between gap-3">
-          <span className="text-sm">Avoid same partners in consecutive rounds</span>
-          <input
-            type="checkbox"
-            checked={config.avoidImmediateRepeat}
-            onChange={(e) => setConfig({ avoidImmediateRepeat: e.target.checked })}
-            className="h-5 w-5 accent-cyan-500"
-          />
-        </label>
-        <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-          <span>Max courts</span>
+
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span>Points per game</span>
+            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+              sum
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {APP_DEFAULTS.pointsPerGameOptions.map((n) => {
+              const selected =
+                !customPointsOpen && config.targetTotal === n;
+              return (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    setCustomPointsOpen(false);
+                    setConfig({ targetTotal: n });
+                    setCustomPointsDraft(String(n));
+                  }}
+                  className={
+                    'h-9 min-w-[3rem] rounded-lg border px-2 text-sm font-medium transition ' +
+                    (selected
+                      ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
+                  }
+                >
+                  {n}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setCustomPointsOpen(true);
+                setCustomPointsDraft(String(config.targetTotal));
+              }}
+              className={
+                'h-9 rounded-lg border px-3 text-sm font-medium transition ' +
+                (customPointsOpen
+                  ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
+                  : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
+              }
+            >
+              Custom
+            </button>
+          </div>
+          {customPointsOpen && (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="numeric"
+                min={APP_DEFAULTS.pointsPerGameMin}
+                max={APP_DEFAULTS.pointsPerGameMax}
+                step={1}
+                value={customPointsDraft}
+                onChange={(e) => setCustomPointsDraft(e.target.value)}
+                onBlur={commitCustomPoints}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  }
+                }}
+                aria-label="Custom points per game"
+                className="w-24 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-base text-slate-100 focus:border-cyan-400/60 focus:outline-none"
+              />
+              <span className="text-[11px] text-slate-500">
+                {APP_DEFAULTS.pointsPerGameMin}–{APP_DEFAULTS.pointsPerGameMax}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+          <span>Number of courts</span>
           <div className="flex gap-1">
-            {[1, 2, 3].map((n) => (
+            {APP_DEFAULTS.courtsOptions.map((n) => (
               <button
                 key={n}
                 type="button"
                 onClick={() => setConfig({ maxCourts: n })}
                 className={
-                  'h-9 w-10 rounded-lg text-sm font-medium border transition ' +
+                  'h-9 w-10 rounded-lg border text-sm font-medium transition ' +
                   (config.maxCourts === n
                     ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
                     : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
@@ -172,6 +265,16 @@ export default function Setup() {
             ))}
           </div>
         </div>
+
+        <label className="mt-4 flex cursor-pointer items-center justify-between gap-3">
+          <span className="text-sm">Avoid same partners in consecutive rounds</span>
+          <input
+            type="checkbox"
+            checked={config.avoidImmediateRepeat}
+            onChange={(e) => setConfig({ avoidImmediateRepeat: e.target.checked })}
+            className="h-5 w-5 accent-cyan-500"
+          />
+        </label>
       </section>
 
       <div className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-3 backdrop-blur-md">
@@ -183,7 +286,9 @@ export default function Setup() {
         >
           {canStart
             ? `Start session (${players.length} players)`
-            : `Add ${4 - players.length} more player${4 - players.length === 1 ? '' : 's'}`}
+            : `Add ${APP_DEFAULTS.minPlayers - players.length} more player${
+                APP_DEFAULTS.minPlayers - players.length === 1 ? '' : 's'
+              }`}
         </button>
       </div>
     </div>

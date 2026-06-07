@@ -1,21 +1,29 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { APP_DEFAULTS, defaultSessionConfig } from './defaults';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
-import type { Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
+import type { Game, Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
 
-const SCHEMA_VERSION = 1;
+/**
+ * Persisted-state schema version. Bumped whenever the on-disk shape
+ * changes; the `migrate` callback below upgrades older payloads in
+ * place. Keep in step with the storage-key suffix and the migration
+ * map — never reuse a version number for a different change.
+ *
+ *   v1 → v2: introduced configurable `targetTotal` (was hard-coded
+ *            24 in code) and `maxCourts` (was hard-coded 3). The
+ *            field types didn't change so v1 payloads load as-is;
+ *            we just rewrite the version number.
+ */
+const SCHEMA_VERSION = 2;
 const STORAGE_KEY = 'padel-mm:session-v1';
 const INTRO_STORAGE_KEY = 'padel-mm:intro-seen-v1';
 
 const defaultState = (): SessionState => ({
   schemaVersion: SCHEMA_VERSION,
   status: 'setup',
-  config: {
-    targetTotal: 24,
-    maxCourts: 3,
-    avoidImmediateRepeat: true,
-  },
+  config: defaultSessionConfig(),
   players: [],
   rounds: [],
   createdAt: Date.now(),
@@ -47,6 +55,30 @@ interface SessionActions {
   unrecordGame: (roundId: string, gameId: string) => void;
   swapPlayers: (a: PlayerId, b: PlayerId, opts?: SwapOptions) => SwapResult;
   deleteGame: (roundId: string, gameId: string) => void;
+  /**
+   * Append a one-off game to an existing round — used by the History
+   * tab's "+ Add game" affordance for retroactively logging matches
+   * that were played outside the auto-generated draw (e.g. a quick
+   * extra game between two foursomes after the official round
+   * wrapped). The new game is marked `recorded: true` so it counts
+   * toward stats immediately. Court number auto-advances past the
+   * existing slots in that round. Players are NOT validated against
+   * the round's resting list — manual entries are allowed for any
+   * four distinct active players.
+   *
+   * Returns `{ ok: true }` on success, or an error tuple identifying
+   * which precondition failed so the UI can surface a useful notice.
+   */
+  addGameToRound: (
+    roundId: string,
+    payload: {
+      teamA: [PlayerId, PlayerId];
+      teamB: [PlayerId, PlayerId];
+      scoreA: number;
+    },
+  ) =>
+    | { ok: true }
+    | { ok: false; reason: 'round-not-found' | 'duplicate-player' | 'invalid-score' };
   adjustBonus: (id: PlayerId, delta: number) => void;
   finishSession: () => void;
   /**
@@ -102,7 +134,10 @@ export const useSession = create<SessionStore>()(
         const name = rawName.trim();
         if (!name) return;
         const state = get();
-        if (state.players.length >= 16) return;
+        // Hard cap from defaults — keeps store logic in sync with the
+        // Setup screen's "you've hit the roster max" notice and means
+        // raising the limit is a one-line change in `defaults.ts`.
+        if (state.players.length >= APP_DEFAULTS.maxPlayers) return;
         if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return;
         const player: Player = { id: newId(), name, status: 'active', bonus: 0 };
         set({ players: [...state.players, player] });
@@ -131,7 +166,7 @@ export const useSession = create<SessionStore>()(
       startSession: () => {
         const { players } = get();
         const active = players.filter((p) => p.status === 'active').length;
-        if (active < 4) return;
+        if (active < APP_DEFAULTS.minPlayers) return;
         set({ status: 'running' });
       },
 
@@ -301,6 +336,53 @@ export const useSession = create<SessionStore>()(
         });
       },
 
+      addGameToRound: (roundId, payload) => {
+        const { rounds, config } = get();
+        const round = rounds.find((r) => r.id === roundId);
+        if (!round) return { ok: false, reason: 'round-not-found' };
+
+        // Four distinct players, no overlap between team A and B.
+        const ids = [...payload.teamA, ...payload.teamB];
+        const unique = new Set(ids);
+        if (unique.size !== 4) return { ok: false, reason: 'duplicate-player' };
+
+        // Score must fit the configured target. setScore's clamping
+        // would otherwise silently truncate, which is harder to debug
+        // when called from a form rather than the live slider.
+        const target = config.targetTotal;
+        if (
+          !Number.isFinite(payload.scoreA) ||
+          payload.scoreA < 0 ||
+          payload.scoreA > target
+        ) {
+          return { ok: false, reason: 'invalid-score' };
+        }
+        const scoreA = Math.round(payload.scoreA);
+        const scoreB = target - scoreA;
+
+        // Court number: continue past the highest existing court in
+        // the round so manual entries stack visually after the auto
+        // ones rather than colliding with court 1.
+        const maxCourt = round.games.reduce(
+          (acc, g) => (g.court > acc ? g.court : acc),
+          0,
+        );
+        const game: Game = {
+          id: newId(),
+          court: maxCourt + 1,
+          teamA: { playerIds: payload.teamA, score: scoreA },
+          teamB: { playerIds: payload.teamB, score: scoreB },
+          recorded: true,
+        };
+
+        set({
+          rounds: rounds.map((r) =>
+            r.id !== roundId ? r : { ...r, games: [...r.games, game] },
+          ),
+        });
+        return { ok: true };
+      },
+
       adjustBonus: (id, delta) => {
         if (!Number.isFinite(delta)) return;
         set({
@@ -358,9 +440,51 @@ export const useSession = create<SessionStore>()(
         rounds: state.rounds,
         createdAt: state.createdAt,
       }),
+      /**
+       * Forward-migrate older persisted payloads. Each step from
+       * `from` to `from + 1` happens in isolation; the chain runs
+       * automatically. Keep these reads tolerant of missing fields
+       * — anything we can't recover gets filled from the defaults
+       * file, never with a literal.
+       */
+      migrate: (raw, fromVersion) => {
+        // `raw` is `unknown` because we may be reading a payload
+        // from any prior version. Cast to a permissive shape that
+        // only exposes the fields the migrator needs to look at.
+        const persisted = (raw ?? {}) as Partial<SessionState> & {
+          config?: Partial<SessionState['config']>;
+        };
+        let migrated: Partial<SessionState> = { ...persisted };
+
+        // v1 → v2: fields didn't change types, just ensure defaults
+        // exist for any installation that somehow has a missing or
+        // malformed config. Defensive only; v1 always wrote all
+        // three keys so the spread below is a no-op in practice.
+        if (fromVersion < 2) {
+          migrated = {
+            ...migrated,
+            config: {
+              ...defaultSessionConfig(),
+              ...(persisted.config ?? {}),
+            },
+          };
+        }
+
+        // Final guard: stamp the current schema version regardless
+        // of how many migration steps we ran.
+        migrated.schemaVersion = SCHEMA_VERSION;
+        return migrated as SessionState;
+      },
     },
   ),
 );
+
+/**
+ * Re-exported for tests and stories that need to seed a fresh
+ * session without going through the store. Production code should
+ * use `useSession((s) => s.newSession)`.
+ */
+export { defaultState };
 
 /** Lightweight, non-persisted "intro seen" flag stored in localStorage directly. */
 export const introStorage = {
