@@ -339,26 +339,94 @@ export async function importSession(raw: string): Promise<ImportResult> {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Clipboard helper (unchanged)                                              */
+/*  Clipboard helper                                                          */
 /* -------------------------------------------------------------------------- */
 
-export async function copyToClipboard(text: string): Promise<boolean> {
+/** Plain text now, or a Promise that resolves to text (see below). */
+export type ClipboardInput = string | Promise<string>;
+
+/**
+ * Copy text to the system clipboard.
+ *
+ * iOS Safari quirk (why "Copy session" failed while manual textarea
+ * copy worked): the Clipboard API only honours writes that *start*
+ * inside the user-gesture handler. `Copy session` was doing
+ * `await exportSession()` (gzip + base64 — tens of ms) and only then
+ * calling `writeText`, by which time the tap's user activation had
+ * expired. Selecting the share-code textarea and using the native
+ * copy menu is a fresh gesture, so that path always worked.
+ *
+ * Fix: when the caller passes a `Promise<string>`, we call
+ * `navigator.clipboard.write([new ClipboardItem({…})])` *synchronously*
+ * on click; the ClipboardItem's Blob Promise resolves later while
+ * still tied to the original gesture. Supported on iOS Safari 13.4+,
+ * Chrome 76+, Firefox 127+.
+ *
+ * Fallback order:
+ *  1. ClipboardItem + Promise blob (async-safe, iOS)
+ *  2. clipboard.writeText (sync text only)
+ *  3. execCommand('copy') via a briefly-focused in-viewport textarea
+ *     tuned for iOS (no readonly, setSelectionRange not select)
+ */
+export async function copyToClipboard(text: ClipboardInput): Promise<boolean> {
+  const textPromise = typeof text === 'string' ? Promise.resolve(text) : text;
+
+  if (
+    typeof navigator !== 'undefined' &&
+    navigator.clipboard?.write &&
+    typeof ClipboardItem !== 'undefined' &&
+    typeof window !== 'undefined' &&
+    window.isSecureContext
+  ) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain': textPromise.then((t) => new Blob([t], { type: 'text/plain' })),
+        }),
+      ]);
+      return true;
+    } catch {
+      /* fall through — e.g. permission denied or unsupported MIME */
+    }
+  }
+
+  const plain = await textPromise;
+
   try {
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(plain);
       return true;
     }
   } catch {
     /* fall through */
   }
+
+  return copyWithExecCommand(plain);
+}
+
+/** Legacy fallback for browsers without the async Clipboard API. */
+function copyWithExecCommand(text: string): boolean {
+  if (typeof document === 'undefined') return false;
   try {
     const ta = document.createElement('textarea');
     ta.value = text;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'absolute';
-    ta.style.left = '-9999px';
+    // iOS Safari rejects off-screen / readonly textareas for
+    // programmatic copy. Keep the element in the viewport but invisible.
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.width = '2px';
+    ta.style.height = '2px';
+    ta.style.padding = '0';
+    ta.style.border = 'none';
+    ta.style.outline = 'none';
+    ta.style.boxShadow = 'none';
+    ta.style.background = 'transparent';
+    ta.style.opacity = '0';
+    ta.setAttribute('aria-hidden', 'true');
     document.body.appendChild(ta);
-    ta.select();
+    ta.focus();
+    ta.setSelectionRange(0, text.length);
     const ok = document.execCommand('copy');
     document.body.removeChild(ta);
     return ok;

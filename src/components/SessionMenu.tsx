@@ -80,10 +80,14 @@ export default function SessionMenu() {
   const onShare = async () => {
     setBusy(true);
     try {
-      const result = await exportSession(sessionState);
+      // Kick off export immediately but wire clipboard *before* awaiting
+      // so the write starts inside the tap's user-gesture window.
+      // iOS Safari drops clipboard permission once an await boundary
+      // passes without a ClipboardItem Promise (see share.ts).
+      const exportPromise = exportSession(sessionState);
+      const copyPromise = copyToClipboard(exportPromise.then((r) => r.full));
+      const [result, ok] = await Promise.all([exportPromise, copyPromise]);
       setExportResult(result);
-      // Default: copy the whole thing (single code, or all chunks joined).
-      const ok = await copyToClipboard(result.full);
       setCopied(ok ? 'all' : 'none');
       if (ok) window.setTimeout(() => setCopied('none'), 2500);
       // For multi-chunk codes, expand the text so the user can see what to send.

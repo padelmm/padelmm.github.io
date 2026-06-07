@@ -1,0 +1,10 @@
+{
+  "seed": 42,
+  "rounds": 15,
+  "players": ["Alice", "Bob", "Carol", "Dave", "Eve", "Frank"],
+  "config": {
+    "targetTotal": 24,
+    "maxCourts": 1,
+    "avoidImmediateRepeat": true
+  }
+}

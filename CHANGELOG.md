@@ -14,9 +14,43 @@ running an older minor version may not understand a newer code.
 
 ## [Unreleased]
 
-Nothing yet. Next up: a CLI tool to decode `PADELMM/v2/…` codes into
-JSON + run scripted simulations (PRD #7 phase 2), then Mexicano +
-Mix Americano formats on top of the new test harness (PRD #6).
+Nothing yet. Next up: Mexicano + Mix Americano tournament formats
+(PRD #6) on top of the test harness shipped in 0.4.x.
+
+---
+
+## [0.4.1] — 2026-06-07
+
+CLI test harness + iPhone Copy Session fix.
+
+### Added
+- **`npm run decode-share`**: paste a `PADELMM/v2/…` code (or a file /
+  stdin) and get pretty-printed session JSON on stdout. Handy for
+  turning a phone export into a fixture or inspecting what actually
+  got shared. Requires Node.js 18+.
+- **`npm run simulate`**: run N rounds from a JSON fixture with a
+  fixed seed; prints per-player rest counts and fails if
+  `avoidImmediateRepeat` is violated. Example fixtures in
+  `tests/fixtures/`. Documented in `tests/README.md`.
+- **3 clipboard unit tests** (`share-clipboard.test.ts`) covering
+  the async `ClipboardItem` path, sync `writeText`, and the
+  `execCommand` fallback.
+
+### Fixed
+- **Copy Session on iPhone (iOS Safari)**: the button ran
+  `await exportSession()` (gzip + base64) *before* calling
+  `clipboard.writeText`, by which time the tap's user-gesture had
+  expired — so the write silently failed while manually selecting
+  the share-code textarea (a fresh gesture) still worked. Fix:
+  `copyToClipboard` now accepts `Promise<string>` and starts a
+  `ClipboardItem` write synchronously on click; the Blob resolves
+  when export finishes. `SessionMenu` wires export + copy in
+  parallel via `Promise.all`. Legacy fallback textarea tuned for
+  iOS (`setSelectionRange`, in-viewport, no `readonly`).
+
+### Changed
+- Added `tsx` + `happy-dom` dev dependencies (`tsx` runs the CLI
+  scripts; `happy-dom` backs the clipboard tests).
 
 ---
 
