@@ -5,6 +5,7 @@ import Players from './components/Players';
 import Ranking from './components/Ranking';
 import History from './components/History';
 import SessionMenu from './components/SessionMenu';
+import PlayBottomBar from './components/PlayBottomBar';
 import Splash from './components/Splash';
 import AppHeader from './components/AppHeader';
 import UpdateBanner from './components/UpdateBanner';
@@ -82,30 +83,33 @@ export default function App() {
         {tab === 'session' && <SessionMenu />}
       </main>
 
-      {/* Tab bar height feeds --tab-bar-offset in index.css; keep padding
-          classes aligned if you resize this chrome. */}
-      <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto flex max-w-md justify-around border-t border-white/10 bg-bl-navy/85 pb-[max(env(safe-area-inset-bottom),0.25rem)] pt-2 backdrop-blur-md">
-        {tabs.map((t) => {
-          const active = tab === t.id;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              className={
-                'flex flex-1 flex-col items-center gap-0.5 px-2 py-1 text-[11px] font-medium transition ' +
-                (active ? 'text-cyan-300' : 'text-slate-400 active:text-slate-200')
-              }
-              aria-current={active ? 'page' : undefined}
-            >
-              <span className="text-lg leading-none" aria-hidden>
-                {t.emoji}
-              </span>
-              <span>{t.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* Bottom dock: Round action bar (when on Play tab) stacks flush above
+          the tab nav — no absolute offset math, works on any screen size. */}
+      <footer className="fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-md flex-col border-t border-white/10 bg-bl-navy/85 backdrop-blur-md">
+        {tab === 'play' && <PlayBottomBar />}
+        <nav className="flex justify-around pb-[max(env(safe-area-inset-bottom),0.25rem)] pt-2">
+          {tabs.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id)}
+                className={
+                  'flex flex-1 flex-col items-center gap-0.5 px-2 py-1 text-[11px] font-medium transition ' +
+                  (active ? 'text-cyan-300' : 'text-slate-400 active:text-slate-200')
+                }
+                aria-current={active ? 'page' : undefined}
+              >
+                <span className="text-lg leading-none" aria-hidden>
+                  {t.emoji}
+                </span>
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </footer>
     </div>
   );
 }

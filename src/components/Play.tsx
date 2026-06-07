@@ -12,7 +12,6 @@ export default function Play() {
   const players = useSession((s) => s.players);
   const rounds = useSession((s) => s.rounds);
   const config = useSession((s) => s.config);
-  const generateNextRound = useSession((s) => s.generateNextRound);
   const reshuffleCurrentRound = useSession((s) => s.reshuffleCurrentRound);
   const setScore = useSession((s) => s.setScore);
   const recordGame = useSession((s) => s.recordGame);
@@ -30,9 +29,6 @@ export default function Play() {
       .filter((n): n is string => !!n);
   }, [currentRound, players]);
 
-  const allRecorded = currentRound
-    ? currentRound.games.length > 0 && currentRound.games.every((g) => g.recorded)
-    : false;
   const noneRecorded = currentRound ? currentRound.games.every((g) => !g.recorded) : false;
 
   const flash = (msg: string | null) => {
@@ -40,10 +36,6 @@ export default function Play() {
     if (msg) window.setTimeout(() => setNotice((curr) => (curr === msg ? null : curr)), 3500);
   };
 
-  const onGenerate = () => {
-    const res = generateNextRound();
-    flash(res.message ?? null);
-  };
   const onReshuffle = () => {
     const res = reshuffleCurrentRound();
     flash(res.message ?? (res.ok ? 'Teams re-shuffled.' : null));
@@ -61,7 +53,7 @@ export default function Play() {
   };
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-[calc(var(--tab-bar-offset)+var(--play-action-bar-height)+0.75rem)] pt-4">
+    <div className="flex flex-col gap-4 px-4 pb-[calc(var(--bottom-dock-max)+0.75rem)] pt-4">
       {currentRound ? (
         <>
           <header className="flex items-baseline justify-between">
@@ -211,21 +203,6 @@ export default function Play() {
       {notice && (
         <p className="glass rounded-xl px-3 py-2 text-xs text-slate-200">{notice}</p>
       )}
-
-      <div className="fixed inset-x-0 bottom-[var(--tab-bar-offset)] z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-3 pt-3 backdrop-blur-md">
-        <button
-          type="button"
-          onClick={onGenerate}
-          disabled={!!currentRound && !allRecorded}
-          className="w-full rounded-xl bg-cyan-500/90 px-4 py-4 text-base font-semibold text-slate-900 shadow-lcd transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500 disabled:shadow-none"
-        >
-          {currentRound
-            ? allRecorded
-              ? 'Generate next round'
-              : 'Save all scores to continue'
-            : 'Generate first round'}
-        </button>
-      </div>
 
       <PlayerSwapSheet
         open={swapFrom !== null}

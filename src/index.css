@@ -12,17 +12,16 @@
   --score-lightness: 62%;
 
   /*
-   * Fixed bottom chrome heights — keep in sync with App.tsx tab nav
-   * (pt-2 + emoji/label button + pb safe-area) and Play.tsx action bar
-   * (pt-3 + py-4 button + pb-3). Play pins its bar above the tab nav
-   * via --tab-bar-offset; without the safe-area term, iPhone home-
-   * indicator padding made bottom-16 (64px) too short and clipped the
-   * "Generate next round" button.
+   * Max height of the fixed bottom dock in App.tsx (Play action bar +
+   * tab nav + safe area). Used only for scroll padding in Play.tsx;
+   * the dock itself is a flex column so the action bar and tabs sit
+   * flush with no gap on any phone.
    */
-  --tab-bar-offset: calc(
-    3.5rem + max(env(safe-area-inset-bottom, 0px), 0.25rem)
+  --tab-bar-height: calc(
+    3.25rem + max(env(safe-area-inset-bottom, 0px), 0.25rem)
   );
-  --play-action-bar-height: 5rem;
+  --play-action-max: 4.25rem;
+  --bottom-dock-max: calc(var(--tab-bar-height) + var(--play-action-max));
 }
 
 html,
