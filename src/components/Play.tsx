@@ -61,7 +61,7 @@ export default function Play() {
   };
 
   return (
-    <div className="flex flex-col gap-4 px-4 pb-36 pt-4">
+    <div className="flex flex-col gap-4 px-4 pb-[calc(var(--tab-bar-offset)+var(--play-action-bar-height)+0.75rem)] pt-4">
       {currentRound ? (
         <>
           <header className="flex items-baseline justify-between">
@@ -212,7 +212,7 @@ export default function Play() {
         <p className="glass rounded-xl px-3 py-2 text-xs text-slate-200">{notice}</p>
       )}
 
-      <div className="fixed inset-x-0 bottom-16 z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-3 pt-3 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-[var(--tab-bar-offset)] z-10 mx-auto max-w-md border-t border-white/10 bg-bl-navy/85 px-4 pb-3 pt-3 backdrop-blur-md">
         <button
           type="button"
           onClick={onGenerate}

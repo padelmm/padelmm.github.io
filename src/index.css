@@ -10,6 +10,19 @@
    * touching every call site or losing the cyan→yellow→red gradient. */
   --score-saturation: 85%;
   --score-lightness: 62%;
+
+  /*
+   * Fixed bottom chrome heights — keep in sync with App.tsx tab nav
+   * (pt-2 + emoji/label button + pb safe-area) and Play.tsx action bar
+   * (pt-3 + py-4 button + pb-3). Play pins its bar above the tab nav
+   * via --tab-bar-offset; without the safe-area term, iPhone home-
+   * indicator padding made bottom-16 (64px) too short and clipped the
+   * "Generate next round" button.
+   */
+  --tab-bar-offset: calc(
+    3.5rem + max(env(safe-area-inset-bottom, 0px), 0.25rem)
+  );
+  --play-action-bar-height: 5rem;
 }
 
 html,
