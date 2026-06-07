@@ -1,4 +1,14 @@
+import { defaultSessionConfig } from './defaults';
 import type { SessionState } from './types';
+
+/**
+ * Highest schemaVersion this build knows about. Anything <= this is
+ * accepted on import (the store's migrator forward-ports older data);
+ * anything > this is from a newer client and we reject with a clear
+ * message so the user can update. Updating this constant is part of
+ * the schema-bump checklist in `store.ts` SCHEMA_VERSION.
+ */
+const MAX_KNOWN_SCHEMA = 3;
 
 // v1: PADELMM/v1/<standard-base64-of-utf8-json>            (legacy, import only)
 // v2: PADELMM/v2/<urlsafe-base64-of-gzip-of-utf8-json>     (single message)
@@ -154,14 +164,30 @@ export interface ImportResult {
 }
 
 /**
- * Validate that an arbitrary parsed value is a SessionState we can trust.
- * We allow-list known fields and reject anything else. This protects against
- * prototype pollution and malformed payloads from untrusted text input.
+ * Validate that an arbitrary parsed value is a SessionState we can
+ * trust. Allow-list known fields and reject anything else — this
+ * protects against prototype pollution and malformed payloads from
+ * untrusted text input.
+ *
+ * Schema-version handling:
+ *  - missing / non-numeric → treat as legacy v1 (pre-versioned codes)
+ *  - 1 .. MAX_KNOWN_SCHEMA → accept; the store's migrator forward-
+ *    ports the payload after we hand it off
+ *  - > MAX_KNOWN_SCHEMA → reject with a "please update" hint (caller
+ *    surfaces a friendlier message)
+ *
+ * Previously this checked `schemaVersion !== 1` strictly, which
+ * silently broke imports the moment we bumped the schema to v2 in
+ * v0.3.0 — every export produced by the same build refused to come
+ * back in. Now any version the build knows about flows through.
  */
 function validateState(value: unknown): value is SessionState {
   if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
-  if (v['schemaVersion'] !== 1) return false;
+  const raw = v['schemaVersion'];
+  const version = typeof raw === 'number' ? raw : 1;
+  if (!Number.isInteger(version) || version < 1) return false;
+  if (version > MAX_KNOWN_SCHEMA) return false;
   if (!Array.isArray(v['players'])) return false;
   if (!Array.isArray(v['rounds'])) return false;
   if (!v['config'] || typeof v['config'] !== 'object') return false;
@@ -178,11 +204,24 @@ function finalizeImport(json: string): ImportResult {
     return { ok: false, error: 'Corrupted share code: invalid JSON.' };
   }
   if (!validateState(parsed)) {
+    // Distinguish the "newer than us" case so the error message can
+    // tell the host to update rather than blaming the sender.
+    const rawVersion = (parsed as Record<string, unknown> | null)?.['schemaVersion'];
+    if (typeof rawVersion === 'number' && rawVersion > MAX_KNOWN_SCHEMA) {
+      return {
+        ok: false,
+        error: `Share code is from a newer app version (schema v${rawVersion}). Update this phone and retry.`,
+      };
+    }
     return { ok: false, error: 'Share code is not a valid Padel M&M session.' };
   }
   const state = parsed as SessionState;
-  // Backfill `bonus` for codes exported before the bonus feature.
+  // Backfill defensible defaults for codes exported before each new
+  // feature landed. The store's migrator handles deeper schema
+  // shape changes; these per-field backfills cover the easy cases
+  // so the imported session opens with sane values.
   state.players = state.players.map((p) => ({ ...p, bonus: p.bonus ?? 0 }));
+  state.config = { ...defaultSessionConfig(), ...state.config };
   return { ok: true, state };
 }
 

@@ -1,4 +1,5 @@
 import { computeStats, sortByMode } from './stats';
+import { defaultRandom, type Random } from './random';
 import type { RankingMode } from './ranking-mode';
 import type { Game, Player, PlayerId, Round, SessionConfig } from './types';
 
@@ -7,10 +8,16 @@ const newId = (): string =>
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
 
-function shuffle<T>(arr: readonly T[]): T[] {
+/**
+ * Fisher–Yates shuffle. Pure given a fixed `random` function — tests
+ * pass a seeded PRNG (see `lib/random.ts`) so generation is fully
+ * deterministic. Production callers omit the argument and get the
+ * normal `Math.random()` behaviour via `defaultRandom`.
+ */
+function shuffle<T>(arr: readonly T[], random: Random = defaultRandom): T[] {
   const out = arr.slice();
   for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     const a = out[i] as T;
     const b = out[j] as T;
     out[i] = b;
@@ -84,6 +91,13 @@ export interface GenerateRoundInput {
   players: readonly Player[];
   rounds: readonly Round[];
   config: SessionConfig;
+  /**
+   * Optional seeded RNG used for shuffles and tie-breaks. Production
+   * code omits this argument and gets `Math.random()`; tests and the
+   * CLI simulator pass `mulberry32(seed)` so the round draw becomes
+   * a deterministic function of `(players, rounds, config, seed)`.
+   */
+  random?: Random;
 }
 
 export interface GenerateRoundResult {
@@ -91,7 +105,12 @@ export interface GenerateRoundResult {
   message?: string;
 }
 
-export function generateRound({ players, rounds, config }: GenerateRoundInput): GenerateRoundResult {
+export function generateRound({
+  players,
+  rounds,
+  config,
+  random = defaultRandom,
+}: GenerateRoundInput): GenerateRoundResult {
   const active = players.filter((p) => p.status === 'active');
   if (active.length < 4) {
     return { round: null, message: `Need at least 4 active players (have ${active.length}).` };
@@ -109,7 +128,7 @@ export function generateRound({ players, rounds, config }: GenerateRoundInput): 
   // next round's courts. The previous version sorted ascending and then
   // sliced the front as players, which meant the people who had rested
   // most kept getting picked to rest again — the exact opposite of fair.
-  const orderedByRests = shuffle(active).sort(
+  const orderedByRests = shuffle(active, random).sort(
     (a, b) => (rests.get(b.id) ?? 0) - (rests.get(a.id) ?? 0),
   );
 
@@ -123,10 +142,10 @@ export function generateRound({ players, rounds, config }: GenerateRoundInput): 
 
   const initialScore = Math.floor(config.targetTotal / 2);
 
-  let games: Game[] = chunkInto(shuffle(playingIds), courts, initialScore);
+  let games: Game[] = chunkInto(shuffle(playingIds, random), courts, initialScore);
   if (config.avoidImmediateRepeat) {
     for (let attempt = 0; attempt < 30 && hasImmediateRepeat(games, previousPairs); attempt++) {
-      games = chunkInto(shuffle(playingIds), courts, initialScore);
+      games = chunkInto(shuffle(playingIds, random), courts, initialScore);
     }
   }
 

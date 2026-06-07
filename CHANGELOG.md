@@ -14,8 +14,73 @@ running an older minor version may not understand a newer code.
 
 ## [Unreleased]
 
-Nothing yet. Items being scoped: Mexicano + Mix Americano formats,
-automated test harness.
+Nothing yet. Next up: a CLI tool to decode `PADELMM/v2/…` codes into
+JSON + run scripted simulations (PRD #7 phase 2), then Mexicano +
+Mix Americano formats on top of the new test harness (PRD #6).
+
+---
+
+## [0.4.0] — 2026-06-07
+
+Test foundation + Copy-Session regression fix.
+
+### Added
+- **Vitest test suite** (`npm test`, `npm run test:watch`,
+  `npm run test:coverage`). 55 tests across 6 files exercise the
+  pure-logic core: `random`, `defaults`, `score-color`, `stats`,
+  `teams` (round generation + fairness), and `share` (export ⇄
+  import round-trip including the chunked-message path).
+  Coverage: `score-color` 100%, `stats` 87%, `teams` 79%,
+  `share` 79%. Untested files are the React hooks, store, and
+  theme-application layers, which need a DOM harness — deferred.
+- **Seedable PRNG** in `src/lib/random.ts` (Mulberry32). Lets
+  tests assert "given roster X + seed Y the round draw is exactly
+  Z" instead of having to reason about statistical properties
+  over 1000s of iterations. Production code still uses
+  `Math.random()` by default — the seed is an optional
+  parameter, not a behavioural change. Lays the groundwork for
+  the PRD #7 CLI simulator coming in 0.4.1.
+- **`vitest.config.ts`** sized for fast pure-function unit tests
+  (Node environment, no React plugin, v8 coverage). Kept separate
+  from `vite.config.ts` so the PWA plugin doesn't slow test
+  startup.
+
+### Changed
+- **`generateRound` accepts an optional `random: () => number`
+  argument.** Defaults to `Math.random` so existing call sites
+  are untouched. The new parameter is what makes the round-
+  generation tests deterministic. Same refactor will let the
+  upcoming CLI tool reproduce a session-night's exact draws from
+  a seed in a config file.
+
+### Fixed
+- **Share import accepts schemaVersion 2 + 3** (i.e. every code
+  produced by v0.3.x). The validator was previously hardcoded to
+  `schemaVersion !== 1`, which silently broke the Copy Session
+  flow the moment the store schema bumped to 2 in 0.3.0 — every
+  freshly exported code refused to come back in, exactly the
+  "Copy Session button stopped working" issue called out in the
+  PRD. The validator now accepts any version up to
+  `MAX_KNOWN_SCHEMA` (currently 3) and hands the payload to the
+  store's migrator; codes from a *newer* build than this one
+  surface a clear "update your phone" error instead of a vague
+  "not a valid session". Regression test pinned in
+  `share.test.ts`.
+- **Import backfills missing `SessionConfig` fields** from
+  `defaultSessionConfig()`. Pre-0.3 codes that lacked
+  `avoidImmediateRepeat` (or future-rev codes missing fields we
+  add next) now import with sensible defaults instead of
+  partial-config states that confuse downstream code.
+
+### Notes for maintainers
+- When you bump `SCHEMA_VERSION` in `store.ts`, also bump
+  `MAX_KNOWN_SCHEMA` in `share.ts` and add a fixture-level test
+  in `share.test.ts` covering the new version. The validator
+  comment block calls this out.
+- Test scripts run in <300 ms on a quiet machine. Aim to keep
+  pure-logic tests in `src/lib/**` and any future DOM tests in a
+  separate `src/components/**.test.tsx` glob (vitest config will
+  need a project override at that point).
 
 ---
 
