@@ -4,9 +4,14 @@ import type { SessionState } from './types';
 
 function tinySession(): SessionState {
   return {
-    schemaVersion: 3,
+    schemaVersion: 4,
     status: 'running',
-    config: { targetTotal: 24, maxCourts: 2, avoidImmediateRepeat: true },
+    config: {
+      targetTotal: 24,
+      maxCourts: 2,
+      avoidImmediateRepeat: true,
+      tournament: 'mix-and-match',
+    },
     players: [
       { id: 'p1', name: 'Alice', status: 'active', bonus: 0 },
       { id: 'p2', name: 'Bob', status: 'active', bonus: 0 },
@@ -45,7 +50,7 @@ describe('exportSession + importSession round-trip', () => {
     const imp = await importSession(exp.full);
     expect(imp.ok, imp.error).toBe(true);
     expect(imp.state).toBeDefined();
-    expect(imp.state!.schemaVersion).toBe(3);
+    expect(imp.state!.schemaVersion).toBe(4);
     expect(imp.state!.players).toHaveLength(4);
     expect(imp.state!.rounds).toHaveLength(1);
     expect(imp.state!.rounds[0]!.games[0]!.teamA.score).toBe(18);

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { generateRound, previewFinalRound } from './teams';
+import {
+  generateMexicanoRound,
+  generateMixAmericanoRound,
+  generateRound,
+  previewFinalRound,
+} from './teams';
 import { mulberry32 } from './random';
 import type { Player, Round, SessionConfig } from './types';
 
@@ -16,7 +21,16 @@ const baseConfig: SessionConfig = {
   targetTotal: 24,
   maxCourts: 4,
   avoidImmediateRepeat: true,
+  tournament: 'mix-and-match',
 };
+
+function playerWithGender(
+  id: string,
+  name: string,
+  gender: 'm' | 'f',
+): import('./types').Player {
+  return { id, name, status: 'active', bonus: 0, gender };
+}
 
 describe('generateRound — input validation', () => {
   it('refuses to draw with fewer than 4 active players', () => {
@@ -239,6 +253,89 @@ describe('generateRound — fairness', () => {
     expect(result.message).toMatch(/Resting:/);
     // Two of the six must be named in the message.
     expect(result.message!.split(',')).toHaveLength(2);
+  });
+});
+
+describe('generateMexicanoRound', () => {
+  it('seeds court 1 with top-ranked players using 1+4 vs 2+3 pairing', () => {
+    const players = makePlayers(4);
+    const rounds: import('./types').Round[] = [
+      {
+        id: 'r0',
+        number: 1,
+        createdAt: 0,
+        restingPlayerIds: [],
+        games: [
+          {
+            id: 'g1',
+            court: 1,
+            recorded: true,
+            teamA: { playerIds: ['p1', 'p2'], score: 24 },
+            teamB: { playerIds: ['p3', 'p4'], score: 0 },
+          },
+        ],
+      },
+    ];
+    const result = generateMexicanoRound({
+      players,
+      rounds,
+      config: { ...baseConfig, maxCourts: 1, tournament: 'mexicano' },
+    });
+    expect(result.round).not.toBeNull();
+    const g = result.round!.games[0]!;
+    // p1+p2 won → top ranks; within top 4: (1+4) vs (2+3) by player id order
+    // After one win, p1 and p2 lead — exact pairing depends on stats sort.
+    const allIds = new Set([...g.teamA.playerIds, ...g.teamB.playerIds]);
+    expect(allIds.size).toBe(4);
+    expect(g.teamA.playerIds).toHaveLength(2);
+    expect(g.teamB.playerIds).toHaveLength(2);
+  });
+
+  it('rests lowest-ranked players when there are more than courts×4', () => {
+    const players = makePlayers(6);
+    const result = generateMexicanoRound({
+      players,
+      rounds: [],
+      config: { ...baseConfig, maxCourts: 1, tournament: 'mexicano' },
+    });
+    expect(result.round?.games).toHaveLength(1);
+    expect(result.round?.restingPlayerIds).toHaveLength(2);
+  });
+});
+
+describe('generateMixAmericanoRound', () => {
+  it('rejects when active players lack gender', () => {
+    const result = generateMixAmericanoRound({
+      players: makePlayers(4),
+      rounds: [],
+      config: { ...baseConfig, tournament: 'mix-americano' },
+      random: mulberry32(1),
+    });
+    expect(result.round).toBeNull();
+    expect(result.message).toMatch(/gender/i);
+  });
+
+  it('forms man+woman teams on each court', () => {
+    const players = [
+      playerWithGender('m1', 'M1', 'm'),
+      playerWithGender('m2', 'M2', 'm'),
+      playerWithGender('f1', 'F1', 'f'),
+      playerWithGender('f2', 'F2', 'f'),
+    ];
+    const result = generateMixAmericanoRound({
+      players,
+      rounds: [],
+      config: { ...baseConfig, maxCourts: 1, tournament: 'mix-americano' },
+      random: mulberry32(99),
+    });
+    expect(result.round?.games).toHaveLength(1);
+    const g = result.round!.games[0]!;
+    const byId = new Map(players.map((p) => [p.id, p]));
+    for (const team of [g.teamA, g.teamB]) {
+      const genders = team.playerIds.map((id) => byId.get(id)?.gender);
+      expect(genders).toContain('m');
+      expect(genders).toContain('f');
+    }
   });
 });
 

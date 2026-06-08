@@ -3,11 +3,20 @@ import { persist } from 'zustand/middleware';
 import {
   APP_DEFAULTS,
   defaultSessionConfig,
+  isValidTournament,
   normalisePointsPerGame,
 } from './defaults';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
-import type { Game, Player, PlayerId, PlayerStatus, Round, SessionState } from './types';
+import type {
+  Game,
+  Player,
+  PlayerGender,
+  PlayerId,
+  PlayerStatus,
+  Round,
+  SessionState,
+} from './types';
 
 /**
  * Persisted-state schema version. Bumped whenever the on-disk shape
@@ -20,7 +29,7 @@ import type { Game, Player, PlayerId, PlayerStatus, Round, SessionState } from '
  *            field types didn't change so v1 payloads load as-is;
  *            we just rewrite the version number.
  */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 const STORAGE_KEY = 'padel-mm:session-v1';
 const INTRO_STORAGE_KEY = 'padel-mm:intro-seen-v1';
 
@@ -50,6 +59,7 @@ interface SessionActions {
   renamePlayer: (id: PlayerId, name: string) => void;
   removePlayer: (id: PlayerId) => void;
   setPlayerStatus: (id: PlayerId, status: PlayerStatus) => void;
+  setPlayerGender: (id: PlayerId, gender: PlayerGender) => void;
   startSession: () => void;
   generateNextRound: () => { ok: boolean; message?: string };
   reshuffleCurrentRound: () => { ok: boolean; message?: string };
@@ -433,10 +443,21 @@ export const useSession = create<SessionStore>()(
         });
       },
 
-      setConfig: (patch) =>
+      setPlayerGender: (id, gender) =>
         set({
-          config: { ...get().config, ...patch },
+          players: get().players.map((p) => (p.id === id ? { ...p, gender } : p)),
         }),
+
+      setConfig: (patch) => {
+        const next = { ...get().config, ...patch };
+        if (patch.targetTotal !== undefined) {
+          next.targetTotal = normalisePointsPerGame(patch.targetTotal);
+        }
+        if (patch.tournament !== undefined && !isValidTournament(patch.tournament)) {
+          next.tournament = APP_DEFAULTS.tournament;
+        }
+        set({ config: next });
+      },
 
       replaceState: (next) => {
         const normalized: SessionState = {
@@ -498,6 +519,21 @@ export const useSession = create<SessionStore>()(
             config: {
               ...cfg,
               targetTotal: normalisePointsPerGame(cfg.targetTotal),
+            },
+          };
+        }
+
+        // v3 → v4: tournament format on SessionConfig (defaults to
+        // Americano / mix-and-match for every existing session).
+        if (fromVersion < 4) {
+          const cfg = migrated.config ?? defaultSessionConfig();
+          const t = cfg.tournament;
+          migrated = {
+            ...migrated,
+            config: {
+              ...defaultSessionConfig(),
+              ...cfg,
+              tournament: isValidTournament(t ?? '') ? t : APP_DEFAULTS.tournament,
             },
           };
         }

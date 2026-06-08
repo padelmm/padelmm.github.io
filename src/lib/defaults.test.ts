@@ -81,6 +81,7 @@ describe('defaultSessionConfig', () => {
     expect(cfg.targetTotal).toBe(APP_DEFAULTS.pointsPerGame);
     expect(cfg.maxCourts).toBe(APP_DEFAULTS.courts);
     expect(cfg.avoidImmediateRepeat).toBe(APP_DEFAULTS.avoidImmediateRepeat);
+    expect(cfg.tournament).toBe(APP_DEFAULTS.tournament);
   });
 
   it('returns a fresh mutable object each call', () => {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
-import type { PlayerStatus } from '../lib/types';
+import type { PlayerGender, PlayerStatus } from '../lib/types';
 
 const statusLabel: Record<PlayerStatus, string> = {
   active: 'Playing',
@@ -16,9 +16,12 @@ const statusClasses: Record<PlayerStatus, string> = {
 
 export default function Players() {
   const players = useSession((s) => s.players);
+  const config = useSession((s) => s.config);
   const setPlayerStatus = useSession((s) => s.setPlayerStatus);
+  const setPlayerGender = useSession((s) => s.setPlayerGender);
   const addPlayer = useSession((s) => s.addPlayer);
   const renamePlayer = useSession((s) => s.renamePlayer);
+  const mixAmericano = config.tournament === 'mix-americano';
 
   const [name, setName] = useState('');
   const trimmed = name.trim();
@@ -107,6 +110,33 @@ export default function Players() {
                 {statusLabel[p.status]}
               </span>
             </div>
+            {mixAmericano && (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] uppercase tracking-wider text-slate-500">Gender</span>
+                <div className="flex flex-1 gap-1.5">
+                  {(
+                    [
+                      { id: 'm' as PlayerGender, label: 'M' },
+                      { id: 'f' as PlayerGender, label: 'F' },
+                    ] as const
+                  ).map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => setPlayerGender(p.id, g.id)}
+                      className={
+                        'flex-1 rounded-lg border py-1.5 text-xs font-semibold transition active:scale-95 ' +
+                        (p.gender === g.id
+                          ? 'border-cyan-400 bg-cyan-500/80 text-slate-900 shadow-lcd'
+                          : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
+                      }
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-2">
               {(['active', 'paused', 'left'] as PlayerStatus[]).map((s) => (
                 <button

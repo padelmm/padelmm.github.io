@@ -1,4 +1,4 @@
-import { computeStats, sortByMode } from './stats';
+import { computeStats, sortByMode, sortByPoints } from './stats';
 import { defaultRandom, type Random } from './random';
 import type { RankingMode } from './ranking-mode';
 import type { Game, Player, PlayerId, Round, SessionConfig } from './types';
@@ -8,12 +8,6 @@ const newId = (): string =>
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2, 10)}-${Date.now().toString(36)}`;
 
-/**
- * Fisher–Yates shuffle. Pure given a fixed `random` function — tests
- * pass a seeded PRNG (see `lib/random.ts`) so generation is fully
- * deterministic. Production callers omit the argument and get the
- * normal `Math.random()` behaviour via `defaultRandom`.
- */
 function shuffle<T>(arr: readonly T[], random: Random = defaultRandom): T[] {
   const out = arr.slice();
   for (let i = out.length - 1; i > 0; i--) {
@@ -59,13 +53,6 @@ function hasImmediateRepeat(games: readonly Game[], previous: Set<string>): bool
   return false;
 }
 
-/**
- * Build Game objects for the round. `initialScore` is the score we give
- * team A by default; team B's score is derived from `targetTotal - A` at
- * display time. Initialising both sides to the midpoint (12 of 24) means
- * a freshly drawn game opens with the slider centered on 12:12 rather
- * than the lopsided 0:24, which used to confuse hosts.
- */
 function chunkInto(
   playerIds: readonly PlayerId[],
   courts: number,
@@ -87,16 +74,32 @@ function chunkInto(
   return games;
 }
 
+function makeRound(
+  rounds: readonly Round[],
+  games: Game[],
+  restingIds: PlayerId[],
+  active: readonly Player[],
+): GenerateRoundResult {
+  const round: Round = {
+    id: newId(),
+    number: rounds.length + 1,
+    games,
+    restingPlayerIds: restingIds,
+    createdAt: Date.now(),
+  };
+  if (restingIds.length > 0) {
+    const names = restingIds
+      .map((id) => active.find((p) => p.id === id)?.name)
+      .filter((n): n is string => !!n);
+    return { round, message: `Resting: ${names.join(', ')}` };
+  }
+  return { round };
+}
+
 export interface GenerateRoundInput {
   players: readonly Player[];
   rounds: readonly Round[];
   config: SessionConfig;
-  /**
-   * Optional seeded RNG used for shuffles and tie-breaks. Production
-   * code omits this argument and gets `Math.random()`; tests and the
-   * CLI simulator pass `mulberry32(seed)` so the round draw becomes
-   * a deterministic function of `(players, rounds, config, seed)`.
-   */
   random?: Random;
 }
 
@@ -105,7 +108,23 @@ export interface GenerateRoundResult {
   message?: string;
 }
 
-export function generateRound({
+/** Route to the generator for the session's tournament format. */
+export function generateRound(input: GenerateRoundInput): GenerateRoundResult {
+  switch (input.config.tournament) {
+    case 'mexicano':
+      return generateMexicanoRound(input);
+    case 'mix-americano':
+      return generateMixAmericanoRound(input);
+    default:
+      return generateAmericanoRound(input);
+  }
+}
+
+/**
+ * Americano / Mix & Match — random fair rotation with most-rested-first
+ * player selection (the original Blue Lions generator).
+ */
+export function generateAmericanoRound({
   players,
   rounds,
   config,
@@ -118,21 +137,12 @@ export function generateRound({
 
   const courts = Math.min(config.maxCourts, Math.floor(active.length / 4));
   const playingCount = courts * 4;
-  const restingCount = active.length - playingCount;
-
   const rests = countRestsByPlayer(rounds);
-  // Sort by rest count DESCENDING (most-rested first); break ties randomly.
-  //
-  // Fairness intuition: a player who has already sat out a lot is "owed"
-  // playing time, so they should be in the front of the queue for the
-  // next round's courts. The previous version sorted ascending and then
-  // sliced the front as players, which meant the people who had rested
-  // most kept getting picked to rest again — the exact opposite of fair.
+
   const orderedByRests = shuffle(active, random).sort(
     (a, b) => (rests.get(b.id) ?? 0) - (rests.get(a.id) ?? 0),
   );
 
-  // First `playingCount` players (most-rested) take the courts; the rest sit out.
   const playingIds = orderedByRests.slice(0, playingCount).map((p) => p.id);
   const restingIds = orderedByRests.slice(playingCount).map((p) => p.id);
 
@@ -149,20 +159,154 @@ export function generateRound({
     }
   }
 
-  const round: Round = {
-    id: newId(),
-    number: rounds.length + 1,
-    games,
-    restingPlayerIds: restingIds,
-    createdAt: Date.now(),
-  };
-  if (restingCount > 0) {
-    const names = restingIds
-      .map((id) => active.find((p) => p.id === id)?.name)
-      .filter((n): n is string => !!n);
-    return { round, message: `Resting: ${names.join(', ')}` };
+  return makeRound(rounds, games, restingIds, active);
+}
+
+/**
+ * Mexicano — rank active players by points, assign courts by rank
+ * (1–4 on court 1, 5–8 on court 2, …). Within each quartet pair
+ * strongest + weakest vs the middle two (same seeding as final round).
+ * Lowest-ranked players rest when there are more players than courts×4.
+ */
+export function generateMexicanoRound({
+  players,
+  rounds,
+  config,
+}: GenerateRoundInput): GenerateRoundResult {
+  const active = players.filter((p) => p.status === 'active');
+  if (active.length < 4) {
+    return { round: null, message: `Need at least 4 active players (have ${active.length}).` };
   }
-  return { round };
+
+  const courts = Math.min(config.maxCourts, Math.floor(active.length / 4));
+  const playingCount = courts * 4;
+  const activeIds = new Set(active.map((p) => p.id));
+  const ranked = sortByPoints(computeStats(players, rounds)).filter((s) =>
+    activeIds.has(s.playerId),
+  );
+
+  const playingRanked = ranked.slice(0, playingCount);
+  const restingIds = ranked.slice(playingCount).map((s) => s.playerId);
+  const initialScore = Math.floor(config.targetTotal / 2);
+
+  const games: Game[] = [];
+  for (let c = 0; c < courts; c++) {
+    const group = playingRanked.slice(c * 4, c * 4 + 4);
+    if (group.length < 4) break;
+    const ids = group.map((s) => s.playerId) as [PlayerId, PlayerId, PlayerId, PlayerId];
+    games.push({
+      id: newId(),
+      court: c + 1,
+      teamA: { playerIds: [ids[0], ids[3]], score: initialScore },
+      teamB: { playerIds: [ids[1], ids[2]], score: initialScore },
+      recorded: false,
+    });
+  }
+
+  return makeRound(rounds, games, restingIds, active);
+}
+
+/** All valid man+woman pairings for four players (2M + 2F). */
+function mixedPairings(
+  m1: PlayerId,
+  m2: PlayerId,
+  f1: PlayerId,
+  f2: PlayerId,
+): Array<{ teamA: [PlayerId, PlayerId]; teamB: [PlayerId, PlayerId] }> {
+  return [
+    { teamA: [m1, f1], teamB: [m2, f2] },
+    { teamA: [m1, f2], teamB: [m2, f1] },
+  ];
+}
+
+/**
+ * Mix Americano — Americano-style rest fairness, but each court must
+ * have two men and two women; teams are always one man + one woman.
+ */
+export function generateMixAmericanoRound({
+  players,
+  rounds,
+  config,
+  random = defaultRandom,
+}: GenerateRoundInput): GenerateRoundResult {
+  const active = players.filter((p) => p.status === 'active');
+  if (active.length < 4) {
+    return { round: null, message: `Need at least 4 active players (have ${active.length}).` };
+  }
+
+  const missingGender = active.filter((p) => p.gender !== 'm' && p.gender !== 'f');
+  if (missingGender.length > 0) {
+    const names = missingGender.map((p) => p.name).join(', ');
+    return {
+      round: null,
+      message: `Set gender (M/F) for: ${names}. Players tab → Mix Americano.`,
+    };
+  }
+
+  const men = active.filter((p) => p.gender === 'm');
+  const women = active.filter((p) => p.gender === 'f');
+  if (men.length < 2 || women.length < 2) {
+    return {
+      round: null,
+      message: `Mix Americano needs at least 2 men and 2 women (have ${men.length}M, ${women.length}F).`,
+    };
+  }
+
+  const maxCourtsByGender = Math.min(
+    Math.floor(men.length / 2),
+    Math.floor(women.length / 2),
+    Math.floor(active.length / 4),
+  );
+  const courts = Math.min(config.maxCourts, maxCourtsByGender);
+  if (courts < 1) {
+    return { round: null, message: 'Not enough balanced genders for a court.' };
+  }
+
+  const rests = countRestsByPlayer(rounds);
+  const restSort = (a: Player, b: Player) =>
+    (rests.get(b.id) ?? 0) - (rests.get(a.id) ?? 0);
+
+  const menQueue = shuffle(men, random).sort(restSort);
+  const womenQueue = shuffle(women, random).sort(restSort);
+
+  const pickedMen = menQueue.slice(0, courts * 2);
+  const pickedWomen = womenQueue.slice(0, courts * 2);
+  const playingIds = new Set([...pickedMen, ...pickedWomen].map((p) => p.id));
+  const restingIds = active.filter((p) => !playingIds.has(p.id)).map((p) => p.id);
+
+  const previousPairs = config.avoidImmediateRepeat
+    ? partnersInLastRound(rounds[rounds.length - 1])
+    : new Set<string>();
+  const initialScore = Math.floor(config.targetTotal / 2);
+
+  const games: Game[] = [];
+  for (let c = 0; c < courts; c++) {
+    const m1 = pickedMen[c * 2]!;
+    const m2 = pickedMen[c * 2 + 1]!;
+    const f1 = pickedWomen[c * 2]!;
+    const f2 = pickedWomen[c * 2 + 1]!;
+
+    const options = mixedPairings(m1.id, m2.id, f1.id, f2.id);
+    let chosen = options[0]!;
+    if (config.avoidImmediateRepeat) {
+      const alt = options.find(
+        (o) =>
+          !previousPairs.has(pairKey(o.teamA[0], o.teamA[1])) &&
+          !previousPairs.has(pairKey(o.teamB[0], o.teamB[1])),
+      );
+      if (alt) chosen = alt;
+    }
+
+    games.push({
+      id: newId(),
+      court: c + 1,
+      teamA: { playerIds: chosen.teamA, score: initialScore },
+      teamB: { playerIds: chosen.teamB, score: initialScore },
+      recorded: false,
+    });
+  }
+
+  return makeRound(rounds, games, restingIds, active);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -173,7 +317,6 @@ export interface FinalPreviewCourt {
   court: number;
   teamA: [PlayerId, PlayerId];
   teamB: [PlayerId, PlayerId];
-  /** Player IDs in ranking order for the four players on this court. */
   rankedIds: [PlayerId, PlayerId, PlayerId, PlayerId];
 }
 
@@ -184,24 +327,6 @@ export interface FinalPreview {
   needed: number;
 }
 
-/**
- * Compute the proposed final-round draw without committing it.
- *
- * Seeding: take the top `courts × 4` *active* players from the current
- * ranking (see `sortByMode` for the tiebreak order — the host's chosen
- * Points/Wins toggle drives both the leaderboard and the final draw).
- * Group the list into chunks of 4 in rank order — so the strongest 4
- * share court 1, the next 4 share court 2, and so on. Within each
- * chunk, pair the best+worst against the middle two:
- *
- *   ranks (1,2,3,4)  →  Court 1:  (1+4)  vs  (2+3)
- *   ranks (5,6,7,8)  →  Court 2:  (5+8)  vs  (6+7)
- *   ranks (9..12)    →  Court 3:  (9+12) vs (10+11)
- *
- * Result is deterministic given the current ranking + mode, so the
- * preview shown to the host and the eventual committed round always
- * match.
- */
 export function previewFinalRound(
   { players, rounds, config }: GenerateRoundInput,
   mode: RankingMode = 'points',
@@ -227,7 +352,6 @@ export function previewFinalRound(
     const ids = group.map((s) => s.playerId) as [PlayerId, PlayerId, PlayerId, PlayerId];
     courtsOut.push({
       court: c + 1,
-      // Strongest + weakest of the chunk on one side, middle two on the other.
       teamA: [ids[0], ids[3]],
       teamB: [ids[1], ids[2]],
       rankedIds: ids,

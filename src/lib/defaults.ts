@@ -25,15 +25,37 @@
  *    legal values.
  */
 
-import type { SessionConfig } from './types';
+import type { SessionConfig, TournamentType } from './types';
 import type { ThemeMode } from './theme';
 
-/**
- * Tournament format. 'mix-and-match' is the only mode shipping today;
- * 'mexicano' and 'mix-americano' are reserved for PRD items 6 and 7
- * and currently fall back to the same generator as mix-and-match.
- */
-export type TournamentType = 'mix-and-match' | 'mexicano' | 'mix-americano';
+export type { TournamentType };
+
+/** UI metadata for the tournament segmented control in RoundSettings. */
+export const TOURNAMENT_OPTIONS: ReadonlyArray<{
+  id: TournamentType;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: 'mix-and-match',
+    label: 'Americano',
+    description: 'Random fair rotation — new partners each round.',
+  },
+  {
+    id: 'mexicano',
+    label: 'Mexicano',
+    description: 'Courts seeded by ranking — top players on court 1.',
+  },
+  {
+    id: 'mix-americano',
+    label: 'Mix Americano',
+    description: 'Mixed teams (M+F) — set gender on each player.',
+  },
+] as const;
+
+const TOURNAMENT_IDS = new Set<TournamentType>(
+  TOURNAMENT_OPTIONS.map((o) => o.id),
+);
 
 export const APP_DEFAULTS = {
   // --- Appearance --------------------------------------------------------
@@ -91,11 +113,7 @@ export const APP_DEFAULTS = {
 
   // --- Tournament format -------------------------------------------------
 
-  /**
-   * Default tournament type for new sessions. Mexicano / Mix Americano
-   * are placeholders surfaced in the Setup UI but not yet wired into
-   * the generator (PRD items 6 + 7).
-   */
+  /** Default tournament type for new sessions (Blue Lions Americano). */
   tournament: 'mix-and-match' as TournamentType,
 
   // --- Round-generation rules -------------------------------------------
@@ -140,7 +158,12 @@ export function defaultSessionConfig(): SessionConfig {
     targetTotal: APP_DEFAULTS.pointsPerGame,
     maxCourts: APP_DEFAULTS.courts,
     avoidImmediateRepeat: APP_DEFAULTS.avoidImmediateRepeat,
+    tournament: APP_DEFAULTS.tournament,
   };
+}
+
+export function isValidTournament(t: string): t is TournamentType {
+  return TOURNAMENT_IDS.has(t as TournamentType);
 }
 
 /**

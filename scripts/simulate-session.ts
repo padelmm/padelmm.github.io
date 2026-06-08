@@ -22,7 +22,7 @@
  * Use this to sanity-check fairness before/after generator changes.
  */
 import { readFileSync } from 'node:fs';
-import { defaultSessionConfig } from '../src/lib/defaults';
+import { defaultSessionConfig, isValidTournament } from '../src/lib/defaults';
 import { mulberry32 } from '../src/lib/random';
 import { generateRound } from '../src/lib/teams';
 import type { Player, Round, SessionConfig } from '../src/lib/types';
@@ -36,7 +36,7 @@ interface Fixture {
   seed?: number;
   rounds?: number;
   players: string[] | FixturePlayer[];
-  config?: Partial<SessionConfig>;
+  config?: Partial<SessionConfig> & { tournament?: string };
 }
 
 function pairKey(a: string, b: string): string {
@@ -84,7 +84,13 @@ if (roundsIdx !== -1) {
 const fixture = parseFixture(fixturePath);
 const seed = fixture.seed ?? 1;
 const roundCount = roundOverride ?? fixture.rounds ?? 10;
-const config: SessionConfig = { ...defaultSessionConfig(), ...fixture.config };
+const rawCfg = { ...defaultSessionConfig(), ...fixture.config };
+const config: SessionConfig = {
+  ...rawCfg,
+  tournament: isValidTournament(rawCfg.tournament ?? '')
+    ? rawCfg.tournament
+    : defaultSessionConfig().tournament,
+};
 const players = toPlayers(fixture.players);
 const random = mulberry32(seed);
 
@@ -135,7 +141,9 @@ console.log(`Fixture:  ${fixturePath}`);
 console.log(`Seed:     ${seed}`);
 console.log(`Rounds:   ${roundCount}`);
 console.log(`Players:  ${activeCount} active, ${courts} court(s), ${restsPerRound} rest(s)/round`);
-console.log(`Config:   target=${config.targetTotal}, avoidRepeat=${config.avoidImmediateRepeat}`);
+console.log(
+  `Config:   target=${config.targetTotal}, courts=${config.maxCourts}, format=${config.tournament}, avoidRepeat=${config.avoidImmediateRepeat}`,
+);
 console.log('');
 console.log('Rest counts (lower = played more):');
 const sorted = [...rests.entries()].sort((a, b) => a[1] - b[1]);
@@ -147,12 +155,24 @@ for (const p of players) {
   if (!rests.has(p.id)) console.log(`  ${p.name.padEnd(16)} 0`);
 }
 
-if (config.avoidImmediateRepeat) {
-  console.log('');
-  console.log(`Immediate partner-repeat violations: ${partnerRepeatViolations}`);
-  if (partnerRepeatViolations > 0) {
-    console.error('FAIL: generator produced back-to-back partner repeats.');
-    process.exit(1);
+  // Mexicano pairs by fixed rank seeding (1+4 vs 2+3) — repeats are
+  // expected when the same quartet stays on a court. Only Americano /
+  // Mix Americano honour avoidImmediateRepeat.
+  const checkPartnerRepeats =
+    config.avoidImmediateRepeat &&
+    config.tournament !== 'mexicano';
+
+  if (checkPartnerRepeats) {
+    console.log('');
+    console.log(`Immediate partner-repeat violations: ${partnerRepeatViolations}`);
+    if (partnerRepeatViolations > 0) {
+      console.error('FAIL: generator produced back-to-back partner repeats.');
+      process.exit(1);
+    }
+    console.log('OK: no immediate partner repeats detected.');
+  } else if (config.avoidImmediateRepeat && config.tournament === 'mexicano') {
+    console.log('');
+    console.log(
+      'Partner-repeat check skipped (Mexicano uses ranking-based seeding).',
+    );
   }
-  console.log('OK: no immediate partner repeats detected.');
-}

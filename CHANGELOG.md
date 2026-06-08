@@ -14,8 +14,41 @@ running an older minor version may not understand a newer code.
 
 ## [Unreleased]
 
-Nothing yet. Next up: Mexicano + Mix Americano tournament formats
-(PRD #6) on top of the test harness shipped in 0.4.x.
+Nothing yet.
+
+---
+
+## [0.5.0] — 2026-06-08
+
+Tournament formats (PRD #6) — Americano, Mexicano, Mix Americano.
+
+### Added
+- **Tournament format selector** in Settings (`RoundSettings`): choose
+  **Americano** (random fair rotation — the existing Blue Lions
+  generator), **Mexicano** (courts seeded by ranking each round;
+  1+4 vs 2+3 within each court), or **Mix Americano** (mixed M+F
+  teams). Available on Setup and mid-session in the Session tab.
+- **`SessionConfig.tournament`** persisted in session state; schema
+  bumped to **v4** with forward migration (existing sessions default
+  to Americano).
+- **Mix Americano gender** on players: M/F chips on the Players tab
+  when Mix Americano is selected; round generation validates gender
+  and balance (≥2 men + ≥2 women) before drawing.
+- **Generator dispatch** in `teams.ts`: `generateAmericanoRound`,
+  `generateMexicanoRound`, `generateMixAmericanoRound` behind the
+  existing `generateRound` entry point.
+- **`setPlayerGender`** store action.
+- **4 new unit tests** (Mexicano seeding, Mix Americano gender
+  rules) + `tests/fixtures/mexicano-eight.json` for CLI simulate.
+- **Round tab bottom dock** (from prior session): action bar stacked
+  flush above tab nav; hint text instead of a disabled faux-button
+  while scores are unsaved.
+
+### Changed
+- Tournament type moved from `defaults.ts` placeholder to full
+  `types.ts` union; `TOURNAMENT_OPTIONS` drives the Settings UI.
+- `setConfig` normalises `targetTotal` and validates `tournament`.
+- Share import accepts schema **v4** (`MAX_KNOWN_SCHEMA`).
 
 ---
 

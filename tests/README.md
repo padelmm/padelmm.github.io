@@ -38,7 +38,12 @@ when `avoidImmediateRepeat` is enabled.
 ```bash
 npm run simulate -- tests/fixtures/six-players.json
 npm run simulate -- tests/fixtures/twelve-players.json --rounds 30
+npm run simulate -- tests/fixtures/mexicano-eight.json
 ```
+
+`tournament` in the fixture config: `mix-and-match` (default),
+`mexicano`, or `mix-americano` (players need `gender` in a full
+session export — the string-name fixtures are Americano/Mexicano only).
 
 ### Fixture format
 
@@ -50,7 +55,8 @@ npm run simulate -- tests/fixtures/twelve-players.json --rounds 30
   "config": {
     "targetTotal": 24,
     "maxCourts": 1,
-    "avoidImmediateRepeat": true
+    "avoidImmediateRepeat": true,
+    "tournament": "mix-and-match"
   }
 }
 ```

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSession } from '../lib/store';
-import { APP_DEFAULTS, normalisePointsPerGame } from '../lib/defaults';
+import { APP_DEFAULTS, normalisePointsPerGame, TOURNAMENT_OPTIONS } from '../lib/defaults';
+import type { TournamentType } from '../lib/types';
 import NumberStepper from './NumberStepper';
 
 interface Props {
@@ -59,6 +60,42 @@ export default function RoundSettings({ showLiveAdvice = false }: Props) {
       <h2 className="text-sm font-semibold text-slate-300">Settings</h2>
 
       <div className="mt-3 flex flex-col gap-2">
+        <span className="text-sm">Tournament format</span>
+        <div className="flex flex-col gap-1.5">
+          {TOURNAMENT_OPTIONS.map((opt) => {
+            const selected = config.tournament === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setConfig({ tournament: opt.id as TournamentType })}
+                className={
+                  'rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] ' +
+                  (selected
+                    ? 'border-cyan-400 bg-cyan-500/15 ring-1 ring-cyan-400/40'
+                    : 'border-white/10 bg-white/5 hover:bg-white/10')
+                }
+              >
+                <span
+                  className={
+                    'text-sm font-semibold ' + (selected ? 'text-cyan-200' : 'text-slate-200')
+                  }
+                >
+                  {opt.label}
+                </span>
+                <span className="mt-0.5 block text-[11px] text-slate-400">{opt.description}</span>
+              </button>
+            );
+          })}
+        </div>
+        {config.tournament === 'mix-americano' && (
+          <p className="text-[11px] text-amber-200/90">
+            Set each player&apos;s gender on the Players tab before generating rounds.
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2">
         <div className="flex items-center justify-between gap-3 text-sm">
           <span>Points per game</span>
           <span className="text-[10px] uppercase tracking-wider text-slate-500">
