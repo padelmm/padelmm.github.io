@@ -6,6 +6,7 @@ import {
   isValidTournament,
   normalisePointsPerGame,
 } from './defaults';
+import { sortPlayersByName } from './players';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
 import type {
@@ -29,7 +30,7 @@ import type {
  *            field types didn't change so v1 payloads load as-is;
  *            we just rewrite the version number.
  */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 const STORAGE_KEY = 'padel-mm:session-v1';
 const INTRO_STORAGE_KEY = 'padel-mm:intro-seen-v1';
 
@@ -154,14 +155,16 @@ export const useSession = create<SessionStore>()(
         if (state.players.length >= APP_DEFAULTS.maxPlayers) return;
         if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return;
         const player: Player = { id: newId(), name, status: 'active', bonus: 0 };
-        set({ players: [...state.players, player] });
+        set({ players: sortPlayersByName([...state.players, player]) });
       },
 
       renamePlayer: (id, rawName) => {
         const name = rawName.trim();
         if (!name) return;
         set({
-          players: get().players.map((p) => (p.id === id ? { ...p, name } : p)),
+          players: sortPlayersByName(
+            get().players.map((p) => (p.id === id ? { ...p, name } : p)),
+          ),
         });
       },
 
@@ -194,7 +197,11 @@ export const useSession = create<SessionStore>()(
           safeTarget !== config.targetTotal
             ? { ...config, targetTotal: safeTarget }
             : config;
-        set({ status: 'running', config: nextConfig });
+        set({
+          status: 'running',
+          config: nextConfig,
+          players: sortPlayersByName(players),
+        });
       },
 
       generateNextRound: () => {
@@ -535,6 +542,24 @@ export const useSession = create<SessionStore>()(
               ...cfg,
               tournament: isValidTournament(t ?? '') ? t : APP_DEFAULTS.tournament,
             },
+          };
+        }
+
+        // v4 → v5: snapshot tournament on each round for History.
+        if (fromVersion < 5) {
+          const cfg = migrated.config ?? defaultSessionConfig();
+          const fallback = isValidTournament(cfg.tournament ?? '')
+            ? cfg.tournament
+            : APP_DEFAULTS.tournament;
+          migrated = {
+            ...migrated,
+            rounds: (migrated.rounds ?? []).map((round) => {
+              const t = round.tournament;
+              return {
+                ...round,
+                tournament: isValidTournament(t ?? '') ? t : fallback,
+              };
+            }),
           };
         }
 

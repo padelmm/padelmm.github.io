@@ -1,7 +1,8 @@
+import { missingGenderMessage } from './mix-americano';
 import { computeStats, sortByMode, sortByPoints } from './stats';
 import { defaultRandom, type Random } from './random';
 import type { RankingMode } from './ranking-mode';
-import type { Game, Player, PlayerId, Round, SessionConfig } from './types';
+import type { Game, Player, PlayerId, Round, SessionConfig, TournamentType } from './types';
 
 const newId = (): string =>
   typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -79,6 +80,7 @@ function makeRound(
   games: Game[],
   restingIds: PlayerId[],
   active: readonly Player[],
+  tournament: TournamentType,
 ): GenerateRoundResult {
   const round: Round = {
     id: newId(),
@@ -86,6 +88,7 @@ function makeRound(
     games,
     restingPlayerIds: restingIds,
     createdAt: Date.now(),
+    tournament,
   };
   if (restingIds.length > 0) {
     const names = restingIds
@@ -159,7 +162,7 @@ export function generateAmericanoRound({
     }
   }
 
-  return makeRound(rounds, games, restingIds, active);
+  return makeRound(rounds, games, restingIds, active, config.tournament);
 }
 
 /**
@@ -203,7 +206,7 @@ export function generateMexicanoRound({
     });
   }
 
-  return makeRound(rounds, games, restingIds, active);
+  return makeRound(rounds, games, restingIds, active, config.tournament);
 }
 
 /** All valid man+woman pairings for four players (2M + 2F). */
@@ -234,13 +237,9 @@ export function generateMixAmericanoRound({
     return { round: null, message: `Need at least 4 active players (have ${active.length}).` };
   }
 
-  const missingGender = active.filter((p) => p.gender !== 'm' && p.gender !== 'f');
-  if (missingGender.length > 0) {
-    const names = missingGender.map((p) => p.name).join(', ');
-    return {
-      round: null,
-      message: `Set gender (M/F) for: ${names}. Players tab → Mix Americano.`,
-    };
+  const genderMessage = missingGenderMessage(players);
+  if (genderMessage) {
+    return { round: null, message: genderMessage };
   }
 
   const men = active.filter((p) => p.gender === 'm');
@@ -306,7 +305,7 @@ export function generateMixAmericanoRound({
     });
   }
 
-  return makeRound(rounds, games, restingIds, active);
+  return makeRound(rounds, games, restingIds, active, config.tournament);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -400,6 +399,7 @@ export function generateFinalRound(
     restingPlayerIds: preview.restingPlayerIds,
     createdAt: Date.now(),
     kind: 'final',
+    tournament: config.tournament,
   };
 
   if (preview.restingPlayerIds.length > 0) {

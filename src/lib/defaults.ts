@@ -166,6 +166,11 @@ export function isValidTournament(t: string): t is TournamentType {
   return TOURNAMENT_IDS.has(t as TournamentType);
 }
 
+/** Short label for History and confirm dialogs. */
+export function tournamentLabel(id: TournamentType): string {
+  return TOURNAMENT_OPTIONS.find((o) => o.id === id)?.label ?? 'Americano';
+}
+
 /**
  * Type-narrowing helper: validate that an incoming `pointsPerGame`
  * value (either from a UI control or a migrated session) is inside

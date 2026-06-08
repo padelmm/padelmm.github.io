@@ -8,7 +8,7 @@ import type { SessionState } from './types';
  * message so the user can update. Updating this constant is part of
  * the schema-bump checklist in `store.ts` SCHEMA_VERSION.
  */
-const MAX_KNOWN_SCHEMA = 4;
+const MAX_KNOWN_SCHEMA = 5;
 
 // v1: PADELMM/v1/<standard-base64-of-utf8-json>            (legacy, import only)
 // v2: PADELMM/v2/<urlsafe-base64-of-gzip-of-utf8-json>     (single message)

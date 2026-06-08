@@ -1,6 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from '../lib/store';
-import { APP_DEFAULTS, normalisePointsPerGame, TOURNAMENT_OPTIONS } from '../lib/defaults';
+import {
+  APP_DEFAULTS,
+  normalisePointsPerGame,
+  TOURNAMENT_OPTIONS,
+  tournamentLabel,
+} from '../lib/defaults';
 import type { TournamentType } from '../lib/types';
 import NumberStepper from './NumberStepper';
 
@@ -42,7 +47,32 @@ interface Props {
  */
 export default function RoundSettings({ showLiveAdvice = false }: Props) {
   const config = useSession((s) => s.config);
+  const rounds = useSession((s) => s.rounds);
   const setConfig = useSession((s) => s.setConfig);
+  const [pendingTournament, setPendingTournament] = useState<TournamentType | null>(null);
+
+  const hasRecordedGames = rounds.some((r) => r.games.some((g) => g.recorded));
+
+  useEffect(() => {
+    if (!pendingTournament) return;
+    const t = window.setTimeout(() => setPendingTournament(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [pendingTournament]);
+
+  const selectTournament = (id: TournamentType) => {
+    if (config.tournament === id) {
+      setPendingTournament(null);
+      return;
+    }
+    if (showLiveAdvice && hasRecordedGames) {
+      if (pendingTournament !== id) {
+        setPendingTournament(id);
+        return;
+      }
+      setPendingTournament(null);
+    }
+    setConfig({ tournament: id });
+  };
 
   // Whether the "Custom" points stepper is exposed. Persists across
   // remounts via the saved targetTotal — if the host's current
@@ -64,16 +94,19 @@ export default function RoundSettings({ showLiveAdvice = false }: Props) {
         <div className="flex flex-col gap-1.5">
           {TOURNAMENT_OPTIONS.map((opt) => {
             const selected = config.tournament === opt.id;
+            const confirming = pendingTournament === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setConfig({ tournament: opt.id as TournamentType })}
+                onClick={() => selectTournament(opt.id)}
                 className={
                   'rounded-xl border px-3 py-2.5 text-left transition active:scale-[0.99] ' +
                   (selected
                     ? 'border-cyan-400 bg-cyan-500/15 ring-1 ring-cyan-400/40'
-                    : 'border-white/10 bg-white/5 hover:bg-white/10')
+                    : confirming
+                      ? 'border-amber-400/60 bg-amber-500/15 ring-1 ring-amber-400/40'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10')
                 }
               >
                 <span
@@ -88,6 +121,18 @@ export default function RoundSettings({ showLiveAdvice = false }: Props) {
             );
           })}
         </div>
+        {showLiveAdvice && hasRecordedGames && (
+          <p className="rounded-lg border border-amber-400/25 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-100/90">
+            Games already played — changing format only affects{' '}
+            <span className="font-medium">new</span> rounds. Past draws stay as they
+            were. Tap another format twice to confirm.
+          </p>
+        )}
+        {pendingTournament && (
+          <p className="text-[11px] font-medium text-amber-200">
+            Tap {tournamentLabel(pendingTournament)} again to switch format.
+          </p>
+        )}
         {config.tournament === 'mix-americano' && (
           <p className="text-[11px] text-amber-200/90">
             Set each player&apos;s gender on the Players tab before generating rounds.

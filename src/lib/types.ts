@@ -50,6 +50,8 @@ export interface Round {
   restingPlayerIds: PlayerId[];
   createdAt: number;
   kind?: RoundKind;
+  /** Tournament format snapshotted when the round was generated. */
+  tournament?: TournamentType;
 }
 
 export interface SessionConfig {

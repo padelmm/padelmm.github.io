@@ -4,7 +4,7 @@ import type { SessionState } from './types';
 
 function tinySession(): SessionState {
   return {
-    schemaVersion: 4,
+    schemaVersion: 5,
     status: 'running',
     config: {
       targetTotal: 24,
@@ -50,7 +50,7 @@ describe('exportSession + importSession round-trip', () => {
     const imp = await importSession(exp.full);
     expect(imp.ok, imp.error).toBe(true);
     expect(imp.state).toBeDefined();
-    expect(imp.state!.schemaVersion).toBe(4);
+    expect(imp.state!.schemaVersion).toBe(5);
     expect(imp.state!.players).toHaveLength(4);
     expect(imp.state!.rounds).toHaveLength(1);
     expect(imp.state!.rounds[0]!.games[0]!.teamA.score).toBe(18);

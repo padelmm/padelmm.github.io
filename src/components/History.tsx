@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { tournamentLabel } from '../lib/defaults';
 import { useSession } from '../lib/store';
 import { scoreColor } from '../lib/score-color';
 import type { Player, PlayerId } from '../lib/types';
@@ -17,7 +18,8 @@ function formatTime(ts: number): string {
 export default function History() {
   const players = useSession((s) => s.players);
   const rounds = useSession((s) => s.rounds);
-  const target = useSession((s) => s.config.targetTotal);
+  const config = useSession((s) => s.config);
+  const target = config.targetTotal;
   const setScore = useSession((s) => s.setScore);
   const swapPlayers = useSession((s) => s.swapPlayers);
   const deleteGame = useSession((s) => s.deleteGame);
@@ -137,9 +139,14 @@ export default function History() {
                     </span>
                   )}
                 </h2>
-                <span className="text-[10px] uppercase tracking-wider text-slate-400">
-                  {formatTime(r.createdAt)} · {recordedGames}/{r.games.length}
-                </span>
+                <div className="flex flex-col items-end gap-0.5 text-right">
+                  <span className="text-[10px] uppercase tracking-wider text-slate-400">
+                    {formatTime(r.createdAt)} · {recordedGames}/{r.games.length}
+                  </span>
+                  <span className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                    {tournamentLabel(r.tournament ?? config.tournament)}
+                  </span>
+                </div>
               </header>
 
               {r.restingPlayerIds.length > 0 && (

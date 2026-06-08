@@ -18,6 +18,30 @@ Nothing yet.
 
 ---
 
+## [0.6.0] — 2026-06-07
+
+Mix Americano gender visibility, roster sort, tournament UX.
+
+### Added
+- **Mix Americano gender banner** on Round and Players when active
+  players lack M/F; bottom bar blocks generate until fixed; re-shuffle
+  errors show at the top of Round.
+- **Tournament label in History** — each round shows its format below
+  the time (snapshotted when the round was generated).
+- **Mid-session format change guard** — amber warning + double-tap to
+  confirm when games are already recorded (Session tab settings).
+
+### Changed
+- Player roster sorts **A→Z** when adding or renaming (Setup and Players
+  tabs share the same order).
+- Share import accepts schema **v5** (`MAX_KNOWN_SCHEMA`).
+
+### Fixed
+- Generate round / re-shuffle no longer fail silently when Mix
+  Americano players are missing gender.
+
+---
+
 ## [0.5.1] — 2026-06-08
 
 Generic About copy + editable docs.

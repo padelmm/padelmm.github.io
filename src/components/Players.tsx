@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import MixAmericanoGenderBanner from './MixAmericanoGenderBanner';
 import { useSession } from '../lib/store';
 import type { PlayerGender, PlayerStatus } from '../lib/types';
 
@@ -47,6 +48,8 @@ export default function Players() {
         </span>
       </header>
 
+      <MixAmericanoGenderBanner />
+
       <section className="glass rounded-2xl p-3">
         <label className="block text-xs font-medium text-slate-300" htmlFor="add-player">
           Add a new player
@@ -90,8 +93,20 @@ export default function Players() {
       </section>
 
       <ul className="flex flex-col gap-2">
-        {players.map((p) => (
-          <li key={p.id} className="glass flex flex-col gap-2 rounded-2xl p-3">
+        {players.map((p) => {
+          const needsGender =
+            mixAmericano &&
+            p.status === 'active' &&
+            p.gender !== 'm' &&
+            p.gender !== 'f';
+          return (
+          <li
+            key={p.id}
+            className={
+              'glass flex flex-col gap-2 rounded-2xl p-3 ' +
+              (needsGender ? 'ring-2 ring-amber-400/50' : '')
+            }
+          >
             <div className="flex items-center gap-2">
               <input
                 type="text"
@@ -155,7 +170,8 @@ export default function Players() {
               ))}
             </div>
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

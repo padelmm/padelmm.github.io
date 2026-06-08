@@ -57,6 +57,18 @@ describe('generateRound — input validation', () => {
   });
 });
 
+describe('generateRound — tournament snapshot', () => {
+  it('stores the active tournament on each new round', () => {
+    const result = generateRound({
+      players: makePlayers(8),
+      rounds: [],
+      config: { ...baseConfig, tournament: 'mexicano' },
+      random: mulberry32(1),
+    });
+    expect(result.round?.tournament).toBe('mexicano');
+  });
+});
+
 describe('generateRound — court allocation', () => {
   it('caps actual courts at floor(activePlayers / 4)', () => {
     // 6 active players + maxCourts=4 should still only schedule 1
