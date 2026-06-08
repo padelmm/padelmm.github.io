@@ -1,5 +1,5 @@
+import aboutTagline from '../../docs/about-tagline.txt?raw';
 import { useTheme } from '../lib/use-theme';
-import { useSession } from '../lib/store';
 
 /**
  * Direct deep-link to the Feedback issue template. Kept here (not in
@@ -57,11 +57,9 @@ export default function Splash({
   const { resolved } = useTheme();
   const isLight = resolved === 'light';
 
-  // Tagline pulls the active target total from config so the welcome
-  // line always tells the truth — first-run users see the default
-  // (24), customised sessions see their own value, and a fresh
-  // installation never advertises a number we no longer use.
-  const targetTotal = useSession((s) => s.config.targetTotal);
+  // Tagline is loaded from docs/about-tagline.txt at build time so
+  // copy can be edited on GitHub without touching React code.
+  const tagline = aboutTagline.trim();
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center justify-between px-6 pb-10 pt-[max(env(safe-area-inset-top),2.5rem)]">
@@ -97,9 +95,7 @@ export default function Splash({
           <p className="mt-1 text-xs uppercase tracking-[0.25em] text-amber-300/80">avond</p>
         </div>
 
-        <p className="px-2 text-center text-sm text-slate-400">
-          Random teams. Scores to {targetTotal}. Live ranking — all on this phone.
-        </p>
+        <p className="px-2 text-center text-sm text-slate-400">{tagline}</p>
       </div>
 
       <div className="mt-8 w-full max-w-sm">

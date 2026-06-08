@@ -3,9 +3,17 @@
 > Mix & Match for padel evenings — by Alex K.
 
 A tiny web app to run a Padel **Mix & Match avond** on one phone.
-Random teams every round, simple 24-point scoring, live ranking.
+Random or ranked teams, configurable scoring, live ranking — Americano,
+Mexicano, or Mix Americano.
 
 **Open it:** <https://padelmm.github.io/>
+
+## Features
+
+See **[docs/features.md](./docs/features.md)** for the full feature list
+(editable on GitHub without touching app code). The welcome / About
+tagline is in **[docs/about-tagline.txt](./docs/about-tagline.txt)** and
+is bundled at build time.
 
 No account, no install required, no data leaves your phone.
 

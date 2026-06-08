@@ -1,7 +1,16 @@
 {
   "seed": 7,
   "rounds": 5,
-  "players": ["Alex", "Blake", "Casey", "Drew", "Ellis", "Finn", "Gray", "Harper"],
+  "players": [
+    "Alex",
+    "Blake",
+    "Casey",
+    "Drew",
+    "Ellis",
+    "Finn",
+    "Gray",
+    "Harper"
+  ],
   "config": {
     "targetTotal": 24,
     "maxCourts": 2,

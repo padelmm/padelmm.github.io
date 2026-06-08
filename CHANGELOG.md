@@ -18,6 +18,27 @@ Nothing yet.
 
 ---
 
+## [0.5.1] — 2026-06-08
+
+Generic About copy + editable docs.
+
+### Added
+- **`docs/about-tagline.txt`** — welcome / About subtitle; imported at
+  build time (`?raw`) so hosts can edit copy on GitHub without touching
+  React.
+- **`docs/features.md`** — feature list for README; linked from the
+  root README **Features** section.
+
+### Changed
+- About / welcome tagline no longer hard-codes “scores to 24” or
+  implies a single format — describes configurable scoring and all three
+  tournament styles.
+- PWA manifest description updated to match (no “sum-to-24”).
+- README intro made format-agnostic; points to `docs/features.md` and
+  `docs/about-tagline.txt`.
+
+---
+
 ## [0.5.0] — 2026-06-08
 
 Tournament formats (PRD #6) — Americano, Mexicano, Mix Americano.
