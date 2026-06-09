@@ -39,6 +39,9 @@ Mix Americano gender visibility, roster sort, tournament UX.
 ### Fixed
 - Generate round / re-shuffle no longer fail silently when Mix
   Americano players are missing gender.
+- **CI / GitHub Pages build** — `docs/about-tagline.txt` and
+  `docs/features.md` are tracked in git (were gitignored while Splash
+  imported the tagline at build time, which broke the v0.5.1 deploy).
 
 ---
 

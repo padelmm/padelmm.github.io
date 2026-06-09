@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
 
-# Support files
-docs/
+# Local-only docs (Splash bundles about-tagline.txt at build time — must be tracked)
+docs/changeKey.txt
+docs/prd.txt
 
 # Build output
 dist/
