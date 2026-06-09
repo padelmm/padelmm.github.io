@@ -32,6 +32,10 @@ Safer re-shuffle on the Round tab.
 - Re-shuffle keeps the same round id so draw history and scores stay
   linked to the round.
 
+### Fixed
+- CI build: replace `Array.at()` (needs ES2022 types) with index access
+  compatible with the project TypeScript `lib` target.
+
 ---
 
 ## [0.6.0] — 2026-06-07

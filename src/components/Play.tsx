@@ -76,7 +76,8 @@ export default function Play() {
     setConfirmReshuffle(false);
     const res = reshuffleCurrentRound();
     if (res.ok) {
-      const round = useSession.getState().rounds.at(-1);
+      const roundsNow = useSession.getState().rounds;
+      const round = roundsNow[roundsNow.length - 1];
       if (round) {
         const snap = snapshotRoundDraw(round);
         setDrawHistory((prev) => [...prev.slice(0, drawIndex + 1), snap]);
