@@ -7,6 +7,7 @@ import {
   normalisePointsPerGame,
 } from './defaults';
 import { sortPlayersByName } from './players';
+import { applySnapshotToRound, type RoundDrawSnapshot } from './round-draw';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
 import type {
@@ -64,6 +65,8 @@ interface SessionActions {
   startSession: () => void;
   generateNextRound: () => { ok: boolean; message?: string };
   reshuffleCurrentRound: () => { ok: boolean; message?: string };
+  /** Restore team draw on the current round (undo/redo re-shuffle). */
+  restoreRoundDraw: (snapshot: RoundDrawSnapshot) => { ok: boolean; message?: string };
   startFinalRound: () => { ok: boolean; message?: string };
   setScore: (roundId: string, gameId: string, scoreA: number) => void;
   recordGame: (roundId: string, gameId: string) => void;
@@ -253,9 +256,32 @@ export const useSession = create<SessionStore>()(
         const priorRounds = rounds.slice(0, -1);
         const result = generateRound({ players, rounds: priorRounds, config });
         if (!result.round) return { ok: false, message: result.message };
-        const replacement: Round = { ...result.round, number: current.number };
+        const replacement: Round = {
+          ...result.round,
+          id: current.id,
+          number: current.number,
+          createdAt: current.createdAt,
+          kind: current.kind,
+          tournament: current.tournament ?? result.round.tournament,
+        };
         set({ rounds: [...priorRounds, replacement] });
         return { ok: true, message: result.message };
+      },
+
+      restoreRoundDraw: (snapshot) => {
+        const { rounds, status } = get();
+        if (status !== 'running') return { ok: false, message: 'Session not started.' };
+        if (rounds.length === 0) return { ok: false, message: 'No round to restore.' };
+        const current = rounds[rounds.length - 1] as Round;
+        if (current.games.some((g) => g.recorded)) {
+          return {
+            ok: false,
+            message: 'Some games are already recorded — unrecord them first.',
+          };
+        }
+        const replacement = applySnapshotToRound(current, snapshot);
+        set({ rounds: [...rounds.slice(0, -1), replacement] });
+        return { ok: true };
       },
 
       setScore: (roundId, gameId, scoreA) => {

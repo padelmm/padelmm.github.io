@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { snapshotRoundDraw, type RoundDrawSnapshot } from '../lib/round-draw';
 import { useSession } from '../lib/store';
 import type { Player, PlayerId, Round } from '../lib/types';
 import MixAmericanoGenderBanner from './MixAmericanoGenderBanner';
@@ -14,6 +15,7 @@ export default function Play() {
   const rounds = useSession((s) => s.rounds);
   const config = useSession((s) => s.config);
   const reshuffleCurrentRound = useSession((s) => s.reshuffleCurrentRound);
+  const restoreRoundDraw = useSession((s) => s.restoreRoundDraw);
   const setScore = useSession((s) => s.setScore);
   const recordGame = useSession((s) => s.recordGame);
   const unrecordGame = useSession((s) => s.unrecordGame);
@@ -22,6 +24,9 @@ export default function Play() {
   const currentRound: Round | undefined = rounds[rounds.length - 1];
   const [notice, setNotice] = useState<{ text: string; error?: boolean } | null>(null);
   const [swapFrom, setSwapFrom] = useState<PlayerId | null>(null);
+  const [confirmReshuffle, setConfirmReshuffle] = useState(false);
+  const [drawHistory, setDrawHistory] = useState<RoundDrawSnapshot[]>([]);
+  const [drawIndex, setDrawIndex] = useState(0);
 
   const restingNames = useMemo(() => {
     if (!currentRound) return [];
@@ -31,6 +36,26 @@ export default function Play() {
   }, [currentRound, players]);
 
   const noneRecorded = currentRound ? currentRound.games.every((g) => !g.recorded) : false;
+  const canUndoDraw = drawIndex > 0;
+  const canRedoDraw = drawIndex < drawHistory.length - 1;
+
+  useEffect(() => {
+    if (!currentRound) {
+      setDrawHistory([]);
+      setDrawIndex(0);
+      setConfirmReshuffle(false);
+      return;
+    }
+    setDrawHistory([snapshotRoundDraw(currentRound)]);
+    setDrawIndex(0);
+    setConfirmReshuffle(false);
+  }, [currentRound?.id]);
+
+  useEffect(() => {
+    if (!confirmReshuffle) return;
+    const t = window.setTimeout(() => setConfirmReshuffle(false), 4000);
+    return () => window.clearTimeout(t);
+  }, [confirmReshuffle]);
 
   const flash = (msg: string | null, error = false) => {
     const next = msg ? { text: msg, error } : null;
@@ -44,9 +69,39 @@ export default function Play() {
   };
 
   const onReshuffle = () => {
+    if (!confirmReshuffle) {
+      setConfirmReshuffle(true);
+      return;
+    }
+    setConfirmReshuffle(false);
     const res = reshuffleCurrentRound();
-    if (res.ok) flash('Teams re-shuffled.');
-    else flash(res.message ?? 'Could not re-shuffle teams.', true);
+    if (res.ok) {
+      const round = useSession.getState().rounds.at(-1);
+      if (round) {
+        const snap = snapshotRoundDraw(round);
+        setDrawHistory((prev) => [...prev.slice(0, drawIndex + 1), snap]);
+        setDrawIndex((i) => i + 1);
+      }
+      flash('Teams re-shuffled.');
+    } else {
+      flash(res.message ?? 'Could not re-shuffle teams.', true);
+    }
+  };
+
+  const onUndoDraw = () => {
+    if (!canUndoDraw) return;
+    const snap = drawHistory[drawIndex - 1]!;
+    const res = restoreRoundDraw(snap);
+    if (res.ok) setDrawIndex((i) => i - 1);
+    else flash(res.message ?? 'Could not restore draw.', true);
+  };
+
+  const onRedoDraw = () => {
+    if (!canRedoDraw) return;
+    const snap = drawHistory[drawIndex + 1]!;
+    const res = restoreRoundDraw(snap);
+    if (res.ok) setDrawIndex((i) => i + 1);
+    else flash(res.message ?? 'Could not restore draw.', true);
   };
 
   const onChooseSwap = (toId: PlayerId) => {
@@ -103,13 +158,45 @@ export default function Play() {
           )}
 
           {noneRecorded && (
-            <button
-              type="button"
-              onClick={onReshuffle}
-              className="self-end rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-300 transition active:scale-95 hover:bg-white/10"
-            >
-              ⟳ Re-shuffle teams
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={onUndoDraw}
+                  disabled={!canUndoDraw}
+                  aria-label="Previous team draw"
+                  className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition active:scale-95 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={onRedoDraw}
+                  disabled={!canRedoDraw}
+                  aria-label="Next team draw"
+                  className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-slate-300 transition active:scale-95 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  →
+                </button>
+                <button
+                  type="button"
+                  onClick={onReshuffle}
+                  className={
+                    'rounded-lg border px-3 py-1.5 text-xs font-medium transition active:scale-95 ' +
+                    (confirmReshuffle
+                      ? 'border-amber-400/60 bg-amber-500/20 text-amber-100 ring-1 ring-amber-400/40'
+                      : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10')
+                  }
+                >
+                  {confirmReshuffle ? 'Confirm re-shuffle?' : '⟳ Re-shuffle teams'}
+                </button>
+              </div>
+              {drawHistory.length > 1 && (
+                <span className="text-[10px] text-slate-500">
+                  Draw {drawIndex + 1} of {drawHistory.length}
+                </span>
+              )}
+            </div>
           )}
 
           <ul className="flex flex-col gap-3">

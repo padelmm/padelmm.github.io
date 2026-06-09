@@ -18,6 +18,22 @@ Nothing yet.
 
 ---
 
+## [0.6.1] — 2026-06-09
+
+Safer re-shuffle on the Round tab.
+
+### Added
+- **Re-shuffle confirm** — tap ⟳ Re-shuffle teams twice before teams
+  change (amber confirm, same pattern as Session actions).
+- **Undo / redo team draws** — ← → step through prior draws for the
+  current round if a host re-shuffles by mistake mid-game.
+
+### Changed
+- Re-shuffle keeps the same round id so draw history and scores stay
+  linked to the round.
+
+---
+
 ## [0.6.0] — 2026-06-07
 
 Mix Americano gender visibility, roster sort, tournament UX.
