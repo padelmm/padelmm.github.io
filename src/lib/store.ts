@@ -6,7 +6,7 @@ import {
   isValidTournament,
   normalisePointsPerGame,
 } from './defaults';
-import { sortPlayersByName } from './players';
+import { applyPlayerRename, isDuplicatePlayerName, sortPlayersByName } from './players';
 import { applySnapshotToRound, type RoundDrawSnapshot } from './round-draw';
 import { rankingModeStorage } from './ranking-mode';
 import { generateFinalRound, generateRound, newId } from './teams';
@@ -58,7 +58,10 @@ export interface SwapOptions {
 
 interface SessionActions {
   addPlayer: (name: string) => void;
-  renamePlayer: (id: PlayerId, name: string) => void;
+  renamePlayer: (
+    id: PlayerId,
+    name: string,
+  ) => { ok: boolean; reason?: 'empty' | 'duplicate' | 'missing' };
   removePlayer: (id: PlayerId) => void;
   setPlayerStatus: (id: PlayerId, status: PlayerStatus) => void;
   setPlayerGender: (id: PlayerId, gender: PlayerGender) => void;
@@ -156,19 +159,18 @@ export const useSession = create<SessionStore>()(
         // Setup screen's "you've hit the roster max" notice and means
         // raising the limit is a one-line change in `defaults.ts`.
         if (state.players.length >= APP_DEFAULTS.maxPlayers) return;
-        if (state.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) return;
+        if (isDuplicatePlayerName(state.players, name)) return;
         const player: Player = { id: newId(), name, status: 'active', bonus: 0 };
         set({ players: sortPlayersByName([...state.players, player]) });
       },
 
       renamePlayer: (id, rawName) => {
-        const name = rawName.trim();
-        if (!name) return;
-        set({
-          players: sortPlayersByName(
-            get().players.map((p) => (p.id === id ? { ...p, name } : p)),
-          ),
-        });
+        const result = applyPlayerRename(get().players, id, rawName);
+        if (result.ok) {
+          set({ players: result.players });
+          return { ok: true };
+        }
+        return { ok: false, reason: result.reason };
       },
 
       removePlayer: (id) => {

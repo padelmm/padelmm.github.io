@@ -18,6 +18,22 @@ Nothing yet.
 
 ---
 
+## [0.6.2] — 2026-09-26
+
+Player rename: last character, focus, and unique names.
+
+### Fixed
+- Renaming a player no longer gets stuck on the last character. The
+  field is a local draft; empty blur restores the previous name.
+- Roster no longer re-sorts on every keystroke, so the name field keeps
+  focus while typing.
+
+### Changed
+- Rename rejects duplicate names (same case-insensitive check as Add).
+  A clash keeps focus on the field until a unique name is committed.
+
+---
+
 ## [0.6.1] — 2026-06-09
 
 Safer re-shuffle on the Round tab.
@@ -500,7 +516,8 @@ the project moved to formal versioning.
 - Feedback channel piggybacks on GitHub's authentication for spam
   protection; no email address appears anywhere in the bundle.
 
-[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.1...v0.6.2
 [0.3.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/padelmm/padelmm.github.io/releases/tag/v0.1.0

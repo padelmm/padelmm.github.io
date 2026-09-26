@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import MixAmericanoGenderBanner from './MixAmericanoGenderBanner';
+import PlayerNameField from './PlayerNameField';
 import { useSession } from '../lib/store';
 import type { PlayerGender, PlayerStatus } from '../lib/types';
 
@@ -21,7 +22,6 @@ export default function Players() {
   const setPlayerStatus = useSession((s) => s.setPlayerStatus);
   const setPlayerGender = useSession((s) => s.setPlayerGender);
   const addPlayer = useSession((s) => s.addPlayer);
-  const renamePlayer = useSession((s) => s.renamePlayer);
   const mixAmericano = config.tournament === 'mix-americano';
 
   const [name, setName] = useState('');
@@ -108,13 +108,11 @@ export default function Players() {
             }
           >
             <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={p.name}
-                onChange={(e) => renamePlayer(p.id, e.target.value)}
-                maxLength={24}
+              <PlayerNameField
+                playerId={p.id}
+                name={p.name}
                 aria-label={`Rename ${p.name}`}
-                className="min-w-0 flex-1 rounded-lg bg-transparent px-1 py-1 text-base font-medium text-slate-100 focus:bg-black/30 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
+                className="min-w-0 w-full rounded-lg bg-transparent px-1 py-1 text-base font-medium text-slate-100 focus:bg-black/30 focus:outline-none focus:ring-1 focus:ring-cyan-400/40"
               />
               <span
                 className={

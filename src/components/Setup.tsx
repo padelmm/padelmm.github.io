@@ -3,6 +3,7 @@ import { useSession } from '../lib/store';
 import { APP_DEFAULTS } from '../lib/defaults';
 import { useTheme } from '../lib/use-theme';
 import ImportSessionForm from './ImportSessionForm';
+import PlayerNameField from './PlayerNameField';
 import RoundSettings from './RoundSettings';
 
 export default function Setup() {
@@ -10,7 +11,6 @@ export default function Setup() {
   const config = useSession((s) => s.config);
   const addPlayer = useSession((s) => s.addPlayer);
   const removePlayer = useSession((s) => s.removePlayer);
-  const renamePlayer = useSession((s) => s.renamePlayer);
   const startSession = useSession((s) => s.startSession);
 
   const { resolved } = useTheme();
@@ -129,12 +129,11 @@ export default function Setup() {
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-300">
                   {i + 1}
                 </span>
-                <input
-                  type="text"
-                  value={p.name}
-                  onChange={(e) => renamePlayer(p.id, e.target.value)}
-                  maxLength={24}
-                  className="min-w-0 flex-1 rounded-lg bg-transparent px-2 py-1 text-base text-slate-100 focus:bg-black/30 focus:outline-none"
+                <PlayerNameField
+                  playerId={p.id}
+                  name={p.name}
+                  aria-label={`Rename ${p.name}`}
+                  className="min-w-0 w-full rounded-lg bg-transparent px-2 py-1 text-base text-slate-100 focus:bg-black/30 focus:outline-none"
                 />
                 <button
                   type="button"

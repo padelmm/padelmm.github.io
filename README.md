@@ -114,7 +114,9 @@ Manage the roster mid-session without leaving the game.
 
 - **Add player** — same as in Setup; new joiners start playing from the
   next round.
-- **Rename** — just type into the name field.
+- **Rename** — type in the name field (last letter can be deleted).
+  Names stay unique (same rule as Add). The list only re-sorts after
+  a valid unique name is committed, so focus is not lost while typing.
 - **Status**:
   - **Active** — included in upcoming rounds.
   - **Paused** — sits out the next rounds, but stays on the leaderboard.

@@ -29,7 +29,8 @@ The welcome / About tagline lives separately in
 
 ## Players
 
-- Rename, pause, or mark as left mid-session.
+- Rename, pause, or mark as left mid-session. Rename is unique (same
+  as Add); the field keeps focus until a valid name is committed.
 - **Mix Americano** — set M/F per player on the Players tab.
 - Manual bonus points on the Ranking tab.
 
