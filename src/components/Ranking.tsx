@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import CircleGlyph from './CircleGlyph';
 import { useSession } from '../lib/store';
 import { computeStats, sortByMode } from '../lib/stats';
 import { rankingModeStorage, type RankingMode } from '../lib/ranking-mode';
@@ -185,10 +186,10 @@ export default function Ranking() {
                     <button
                       type="button"
                       onClick={() => adjustBonus(s.playerId, -1)}
-                      className="grid h-12 w-12 place-items-center rounded-full border border-rose-400/30 bg-rose-500/10 text-2xl font-bold leading-none text-rose-200 transition active:scale-90 hover:bg-rose-500/20"
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-rose-400/30 bg-rose-500/10 text-rose-200 transition active:scale-90 hover:bg-rose-500/20"
                       aria-label={`Subtract one bonus point from ${s.name}`}
                     >
-                      −
+                      <CircleGlyph kind="minus" size="md" />
                     </button>
                     <div className="min-w-20 text-center">
                       <div className="text-[10px] uppercase tracking-wider text-slate-400">
@@ -201,10 +202,10 @@ export default function Ranking() {
                     <button
                       type="button"
                       onClick={() => adjustBonus(s.playerId, +1)}
-                      className="grid h-12 w-12 place-items-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-2xl font-bold leading-none text-emerald-200 transition active:scale-90 hover:bg-emerald-500/20"
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-200 transition active:scale-90 hover:bg-emerald-500/20"
                       aria-label={`Add one bonus point to ${s.name}`}
                     >
-                      +
+                      <CircleGlyph kind="plus" size="md" />
                     </button>
                   </div>
                 )}

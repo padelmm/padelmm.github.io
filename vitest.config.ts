@@ -16,12 +16,11 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    // Node environment is sufficient: every test target is a pure
-    // function (`teams.ts`, `score-color.ts`, `defaults.ts`, etc.)
-    // with no DOM or React dependency. Component tests, when we add
-    // them, will move to jsdom via a project override.
+    // Node environment is the default for pure-function tests.
+    // Component tests opt into happy-dom with a file-level
+    // `@vitest-environment happy-dom` docblock.
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
     // CI-friendly defaults: deterministic, no watch, fail fast on
     // unhandled rejections in test setup.
     pool: 'forks',

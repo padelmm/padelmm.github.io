@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useSession } from '../lib/store';
 import { APP_DEFAULTS } from '../lib/defaults';
 import { useTheme } from '../lib/use-theme';
@@ -18,6 +18,7 @@ export default function Setup() {
 
   const [name, setName] = useState('');
   const [importOpen, setImportOpen] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   const trimmed = name.trim();
   const duplicate = players.some(
@@ -27,10 +28,26 @@ export default function Setup() {
     trimmed.length > 0 && !duplicate && players.length < APP_DEFAULTS.maxPlayers;
   const canStart = players.length >= APP_DEFAULTS.minPlayers;
 
+  const refocusName = () => {
+    const el = nameRef.current;
+    if (!el) return;
+    // Synchronous focus stays inside the tap/key gesture, so the phone
+    // keyboard can stay open. The frame callback covers a blur that
+    // lands after this handler returns.
+    el.focus();
+    window.requestAnimationFrame(() => {
+      nameRef.current?.focus();
+    });
+  };
+
   const submit = () => {
-    if (!canAdd) return;
+    if (!canAdd) {
+      refocusName();
+      return;
+    }
     addPlayer(trimmed);
     setName('');
+    refocusName();
   };
 
   return (
@@ -74,15 +91,20 @@ export default function Setup() {
         </label>
         <div className="mt-2 flex gap-2">
           <input
+            ref={nameRef}
             id="player-name"
             type="text"
             inputMode="text"
+            enterKeyHint="next"
             autoCapitalize="words"
             autoComplete="off"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') submit();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+              }
             }}
             placeholder="Name"
             maxLength={24}
@@ -90,6 +112,11 @@ export default function Setup() {
           />
           <button
             type="button"
+            onMouseDown={(e) => {
+              // A click would move focus onto this button and dismiss
+              // the keyboard. Keep the caret in the name field.
+              e.preventDefault();
+            }}
             onClick={submit}
             disabled={!canAdd}
             className="rounded-xl bg-cyan-500/90 px-5 py-3 text-base font-semibold text-slate-900 shadow-lcd transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500 disabled:shadow-none"

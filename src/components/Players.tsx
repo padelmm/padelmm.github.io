@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import MixAmericanoGenderBanner from './MixAmericanoGenderBanner';
 import PlayerNameField from './PlayerNameField';
 import { useSession } from '../lib/store';
@@ -25,16 +25,30 @@ export default function Players() {
   const mixAmericano = config.tournament === 'mix-americano';
 
   const [name, setName] = useState('');
+  const nameRef = useRef<HTMLInputElement>(null);
   const trimmed = name.trim();
   const duplicate = players.some(
     (p) => p.name.toLowerCase() === trimmed.toLowerCase() && trimmed.length > 0,
   );
   const canAdd = trimmed.length > 0 && !duplicate && players.length < 16;
 
+  const refocusName = () => {
+    const el = nameRef.current;
+    if (!el) return;
+    el.focus();
+    window.requestAnimationFrame(() => {
+      nameRef.current?.focus();
+    });
+  };
+
   const submitAdd = () => {
-    if (!canAdd) return;
+    if (!canAdd) {
+      refocusName();
+      return;
+    }
     addPlayer(trimmed);
     setName('');
+    refocusName();
   };
 
   const activeCount = players.filter((p) => p.status === 'active').length;
@@ -56,15 +70,20 @@ export default function Players() {
         </label>
         <div className="mt-1.5 flex gap-2">
           <input
+            ref={nameRef}
             id="add-player"
             type="text"
             inputMode="text"
+            enterKeyHint="next"
             autoCapitalize="words"
             autoComplete="off"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') submitAdd();
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submitAdd();
+              }
             }}
             placeholder="Name"
             maxLength={24}
@@ -72,6 +91,9 @@ export default function Players() {
           />
           <button
             type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+            }}
             onClick={submitAdd}
             disabled={!canAdd}
             className="rounded-xl bg-cyan-500/90 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow-lcd transition active:scale-95 disabled:cursor-not-allowed disabled:bg-slate-700/60 disabled:text-slate-500 disabled:shadow-none"

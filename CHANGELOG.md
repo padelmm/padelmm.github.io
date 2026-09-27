@@ -18,6 +18,18 @@ Nothing yet.
 
 ---
 
+## [0.6.3] — 2026-09-27
+
+Add-player focus and centred plus/minus controls.
+
+### Fixed
+- Adding a player keeps the cursor in the name field, so the next name
+  can be typed without tapping the field again.
+- Plus and minus marks on the round, setup, and ranking circles are
+  drawn in the centre of the circle.
+
+---
+
 ## [0.6.2] — 2026-09-26
 
 Player rename: last character, focus, and unique names.
@@ -516,7 +528,8 @@ the project moved to formal versioning.
 - Feedback channel piggybacks on GitHub's authentication for spam
   protection; no email address appears anywhere in the bundle.
 
-[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.2...HEAD
+[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.3...HEAD
+[0.6.3]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.1...v0.6.2
 [0.3.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.1.0...v0.2.0

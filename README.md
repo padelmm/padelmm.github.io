@@ -35,7 +35,8 @@ internet.
 ## Quick start (60 seconds to your first game)
 
 1. **Open the app.** Tap **Tap to start** on the welcome screen.
-2. **Add players.** Type a name, tap **Add**. Repeat for everyone (4–16).
+2. **Add players.** Type a name, tap **Add**. The field stays focused, so
+   the next name can be typed immediately. Repeat for everyone (4–16).
 3. (Optional) Pick **Max courts** (1–3) and toggle *Avoid same partners in
    consecutive rounds*.
 4. Tap **Start session**.
@@ -112,8 +113,8 @@ The colours follow the score live:
 
 Manage the roster mid-session without leaving the game.
 
-- **Add player** — same as in Setup; new joiners start playing from the
-  next round.
+- **Add player** — same as in Setup. The name field stays focused after
+  each add, and new joiners start playing from the next round.
 - **Rename** — type in the name field (last letter can be deleted).
   Names stay unique (same rule as Add). The list only re-sorts after
   a valid unique name is committed, so focus is not lost while typing.

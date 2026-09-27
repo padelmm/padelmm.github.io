@@ -10,6 +10,7 @@ The welcome / About tagline lives separately in
 ## Session setup
 
 - Add players (up to 80 on the roster; typical evenings use 4–16).
+  The name field stays focused after each add.
 - **Points per game** — preset 16 / 24 / 32 or a custom even value
   (6–98).
 - **Courts** — 1–12; the generator uses as many as players allow.

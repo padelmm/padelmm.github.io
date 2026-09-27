@@ -1,5 +1,6 @@
 import type { ChangeEvent, CSSProperties } from 'react';
 import { intensityColor, scoreColor } from '../lib/score-color';
+import CircleGlyph from './CircleGlyph';
 
 interface Props {
   target: number;
@@ -47,10 +48,10 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
           type="button"
           onClick={() => set(a + 1)}
           disabled={disabled || a === target}
-          className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-100 transition active:scale-95 disabled:opacity-30"
           aria-label="Award a point to the left team"
         >
-          +
+          <CircleGlyph kind="plus" />
         </button>
         <div className="flex min-w-0 flex-1 items-baseline justify-center gap-3 rounded-xl border border-white/10 bg-black/40 px-3 py-2">
           <span className="lcd-num text-3xl font-bold" style={{ color: colorA }}>
@@ -65,10 +66,10 @@ export default function ScoreSlider({ target, scoreA, disabled, onChange }: Prop
           type="button"
           onClick={() => set(a - 1)}
           disabled={disabled || a === 0}
-          className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-100 transition active:scale-95 disabled:opacity-30"
           aria-label="Award a point to the right team"
         >
-          +
+          <CircleGlyph kind="plus" />
         </button>
       </div>
 

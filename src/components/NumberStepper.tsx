@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import CircleGlyph from './CircleGlyph';
 
 interface Props {
   value: number;
@@ -56,7 +57,7 @@ function snap(n: number, min: number, max: number, step: number): number {
  *    a valid step multiple on blur / Enter.
  *
  * Visual styling matches the score-card buttons on the Round screen
- * (rounded-full `+`/`-`, lcd-num readout in cyan). The readout
+ * (rounded-full plus/minus, lcd-num readout in cyan). The readout
  * shares the `.lcd-num` utility which gets its glow trimmed in
  * light mode via the index.css overrides.
  */
@@ -122,9 +123,9 @@ export default function NumberStepper({
         onClick={dec}
         disabled={atMin}
         aria-label={`Decrease ${ariaLabel ?? 'value'} by ${step}`}
-        className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-100 transition active:scale-95 disabled:opacity-30"
       >
-        −
+        <CircleGlyph kind="minus" />
       </button>
       <label
         // Fixed width (not min-width) so a stepper with a unit and a
@@ -177,9 +178,9 @@ export default function NumberStepper({
         onClick={inc}
         disabled={atMax}
         aria-label={`Increase ${ariaLabel ?? 'value'} by ${step}`}
-        className="h-9 w-9 shrink-0 rounded-full border border-white/15 bg-white/5 text-xl font-bold leading-none text-slate-100 transition active:scale-95 disabled:opacity-30"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-100 transition active:scale-95 disabled:opacity-30"
       >
-        +
+        <CircleGlyph kind="plus" />
       </button>
     </div>
   );
