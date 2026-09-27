@@ -208,12 +208,58 @@ describe('generateRound — fairness', () => {
       }
     }
     // 20 rounds × 2 rests per round = 40 rest slots, spread over 6
-    // players → 6.67 each on average. Tolerate ±2 to absorb the tie-
-    // breaking randomness.
-    for (const count of rests.values()) {
-      expect(count).toBeGreaterThanOrEqual(5);
-      expect(count).toBeLessThanOrEqual(9);
+    // players. Most-rested-first keeps the spread to at most 1.
+    const counts = players.map((p) => rests.get(p.id) ?? 0);
+    expect(Math.max(...counts) - Math.min(...counts)).toBeLessThanOrEqual(1);
+    expect(counts.reduce((sum, count) => sum + count, 0)).toBe(40);
+  });
+
+  it('pairs each of 8 players together exactly once across 7 rounds', () => {
+    const players = makePlayers(8);
+    const rounds: Round[] = [];
+    const random = mulberry32(1);
+    const config: SessionConfig = {
+      ...baseConfig,
+      maxCourts: 2,
+      avoidImmediateRepeat: true,
+    };
+    for (let i = 0; i < 7; i++) {
+      const result = generateRound({ players, rounds, config, random });
+      expect(result.round).not.toBeNull();
+      rounds.push(result.round!);
     }
+    const pairs = new Map<string, number>();
+    for (const round of rounds) {
+      for (const game of round.games) {
+        for (const ids of [game.teamA.playerIds, game.teamB.playerIds]) {
+          const key = ids[0]! < ids[1]! ? `${ids[0]}|${ids[1]}` : `${ids[1]}|${ids[0]}`;
+          pairs.set(key, (pairs.get(key) ?? 0) + 1);
+        }
+      }
+    }
+    for (let i = 1; i <= 8; i++) {
+      for (let j = i + 1; j <= 8; j++) {
+        expect(pairs.get(`p${i}|p${j}`), `p${i}+p${j}`).toBe(1);
+      }
+    }
+  });
+
+  it('still draws a full round when immediate repeats are allowed', () => {
+    const result = generateRound({
+      players: makePlayers(8),
+      rounds: [],
+      config: { ...baseConfig, avoidImmediateRepeat: false, maxCourts: 2 },
+      random: mulberry32(3),
+    });
+    expect(result.round?.games).toHaveLength(2);
+    const seen = new Set<string>();
+    for (const game of result.round!.games) {
+      for (const id of [...game.teamA.playerIds, ...game.teamB.playerIds]) {
+        expect(seen.has(id)).toBe(false);
+        seen.add(id);
+      }
+    }
+    expect(seen.size).toBe(8);
   });
 
   it('avoids reusing the same partner pair in back-to-back rounds when configured', () => {
@@ -348,6 +394,49 @@ describe('generateMixAmericanoRound', () => {
       expect(genders).toContain('m');
       expect(genders).toContain('f');
     }
+  });
+
+  it('does not glue two men who just rested onto the same court', () => {
+    const players = [
+      ...Array.from({ length: 6 }, (_, i) => playerWithGender(`m${i + 1}`, `M${i + 1}`, 'm')),
+      ...Array.from({ length: 6 }, (_, i) => playerWithGender(`f${i + 1}`, `F${i + 1}`, 'f')),
+    ];
+    const config: SessionConfig = {
+      ...baseConfig,
+      maxCourts: 2,
+      tournament: 'mix-americano',
+      avoidImmediateRepeat: true,
+    };
+    let together = 0;
+    let chances = 0;
+    for (let seed = 1; seed <= 40; seed++) {
+      const rounds: Round[] = [];
+      const random = mulberry32(seed);
+      for (let roundIndex = 0; roundIndex < 12; roundIndex++) {
+        const previous = rounds[rounds.length - 1];
+        const result = generateMixAmericanoRound({ players, rounds, config, random });
+        expect(result.round?.games).toHaveLength(2);
+        const round = result.round!;
+        if (previous) {
+          const restedMen = previous.restingPlayerIds.filter((id) => id.startsWith('m'));
+          if (restedMen.length === 2) {
+            chances += 1;
+            const shared = round.games.some((game) => {
+              const ids = new Set([...game.teamA.playerIds, ...game.teamB.playerIds]);
+              return ids.has(restedMen[0]!) && ids.has(restedMen[1]!);
+            });
+            if (shared) together += 1;
+          }
+        }
+        rounds.push(round);
+      }
+    }
+    expect(chances).toBeGreaterThan(100);
+    const rate = together / chances;
+    // A random pairing of the four men who play is 1/3. The old
+    // rest-queue seating sat near 1/2.
+    expect(rate).toBeGreaterThan(0.15);
+    expect(rate).toBeLessThan(0.45);
   });
 });
 

@@ -14,8 +14,9 @@ The welcome / About tagline lives separately in
 - **Points per game** — preset 16 / 24 / 32 or a custom even value
   (6–98).
 - **Courts** — 1–12; the generator uses as many as players allow.
-- **Tournament format** — Americano (random fair rotation), Mexicano
-  (courts by ranking), or Mix Americano (mixed M+F teams).
+- **Tournament format** — Americano (fair rotation: even rests and
+  partners), Mexicano (courts by ranking), or Mix Americano (mixed
+  M+F teams).
 - **Avoid same partners** — optional toggle for back-to-back rounds.
 - Change settings before or during a session (future rounds only).
 

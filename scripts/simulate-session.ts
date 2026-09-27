@@ -145,6 +145,19 @@ console.log(
   `Config:   target=${config.targetTotal}, courts=${config.maxCourts}, format=${config.tournament}, avoidRepeat=${config.avoidImmediateRepeat}`,
 );
 console.log('');
+const pairCounts = new Map<string, number>();
+let partnerMax = 0;
+for (const round of rounds) {
+  for (const game of round.games) {
+    for (const ids of [game.teamA.playerIds, game.teamB.playerIds]) {
+      const key = pairKey(ids[0], ids[1]);
+      const count = (pairCounts.get(key) ?? 0) + 1;
+      pairCounts.set(key, count);
+      if (count > partnerMax) partnerMax = count;
+    }
+  }
+}
+
 console.log('Rest counts (lower = played more):');
 const sorted = [...rests.entries()].sort((a, b) => a[1] - b[1]);
 for (const [id, count] of sorted) {
@@ -154,6 +167,7 @@ for (const [id, count] of sorted) {
 for (const p of players) {
   if (!rests.has(p.id)) console.log(`  ${p.name.padEnd(16)} 0`);
 }
+console.log(`Highest times two players partnered: ${partnerMax}`);
 
   // Mexicano pairs by fixed rank seeding (1+4 vs 2+3) — repeats are
   // expected when the same quartet stays on a court. Only Americano /

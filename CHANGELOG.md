@@ -18,6 +18,17 @@ Nothing yet.
 
 ---
 
+## [0.6.4] — 2026-09-27
+
+Partner balance across the night, not only the previous round.
+
+### Fixed
+- Americano draws keep partnership counts even. On an 8-player, 2-court night every pair meets 1 or 2 times over 10 rounds, instead of some pairs repeating while others never play together.
+- Mix Americano no longer puts the two players who just rested on the same court every time they come back.
+- Who sits out is unchanged: the players who have rested most still play next.
+
+---
+
 ## [0.6.3] — 2026-09-27
 
 Add-player focus and centred plus/minus controls.
@@ -528,7 +539,8 @@ the project moved to formal versioning.
 - Feedback channel piggybacks on GitHub's authentication for spam
   protection; no email address appears anywhere in the bundle.
 
-[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.3...HEAD
+[Unreleased]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.4...HEAD
+[0.6.4]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.3...v0.6.4
 [0.6.3]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.2...v0.6.3
 [0.6.2]: https://github.com/padelmm/padelmm.github.io/compare/v0.6.1...v0.6.2
 [0.3.0]: https://github.com/padelmm/padelmm.github.io/compare/v0.2.0...v0.3.0

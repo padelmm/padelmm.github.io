@@ -45,13 +45,404 @@ function partnersInLastRound(round: Round | undefined): Set<string> {
   return out;
 }
 
-function hasImmediateRepeat(games: readonly Game[], previous: Set<string>): boolean {
-  if (previous.size === 0) return false;
-  for (const g of games) {
-    if (previous.has(pairKey(g.teamA.playerIds[0], g.teamA.playerIds[1]))) return true;
-    if (previous.has(pairKey(g.teamB.playerIds[0], g.teamB.playerIds[1]))) return true;
+/** Exact partner search stays cheap up to 3 courts (12 players, 10395 matchings). */
+const EXACT_LAYOUT_PLAYERS = 12;
+
+/** Mix women-assignment search stays exact up to 4 courts. */
+const EXACT_MIX_COURTS = 4;
+
+const SAMPLE_DRAWS = 32;
+
+type Pair = [PlayerId, PlayerId];
+
+interface CourtTeams {
+  teamA: Pair;
+  teamB: Pair;
+}
+
+interface DrawScore {
+  partner: number;
+  immediate: number;
+  opponent: number;
+}
+
+interface DrawHistory {
+  partners: Map<string, number>;
+  opponents: Map<string, number>;
+}
+
+function drawHistory(rounds: readonly Round[]): DrawHistory {
+  const partners = new Map<string, number>();
+  const opponents = new Map<string, number>();
+  const add = (map: Map<string, number>, a: PlayerId, b: PlayerId) => {
+    const key = pairKey(a, b);
+    map.set(key, (map.get(key) ?? 0) + 1);
+  };
+  for (const round of rounds) {
+    for (const g of round.games) {
+      const [a, b] = g.teamA.playerIds;
+      const [x, y] = g.teamB.playerIds;
+      add(partners, a, b);
+      add(partners, x, y);
+      add(opponents, a, x);
+      add(opponents, a, y);
+      add(opponents, b, x);
+      add(opponents, b, y);
+    }
   }
-  return false;
+  return { partners, opponents };
+}
+
+function scorePairs(
+  pairs: readonly Pair[],
+  history: DrawHistory,
+  previousPairs: ReadonlySet<string>,
+): DrawScore {
+  let partner = 0;
+  let immediate = 0;
+  for (const [a, b] of pairs) {
+    const key = pairKey(a, b);
+    partner += history.partners.get(key) ?? 0;
+    if (previousPairs.has(key)) immediate += 1;
+  }
+  return { partner, immediate, opponent: 0 };
+}
+
+function scoreLayout(
+  courts: readonly CourtTeams[],
+  history: DrawHistory,
+  previousPairs: ReadonlySet<string>,
+): DrawScore {
+  let partner = 0;
+  let immediate = 0;
+  let opponent = 0;
+  for (const court of courts) {
+    const p1 = pairKey(court.teamA[0], court.teamA[1]);
+    const p2 = pairKey(court.teamB[0], court.teamB[1]);
+    partner += history.partners.get(p1) ?? 0;
+    partner += history.partners.get(p2) ?? 0;
+    if (previousPairs.has(p1)) immediate += 1;
+    if (previousPairs.has(p2)) immediate += 1;
+    for (const u of court.teamA) {
+      for (const v of court.teamB) {
+        opponent += history.opponents.get(pairKey(u, v)) ?? 0;
+      }
+    }
+  }
+  return { partner, immediate, opponent };
+}
+
+/** Negative when `a` is the fairer draw. Partner count wins, then immediate repeats, then opponents. */
+function compareScores(a: DrawScore, b: DrawScore, avoidImmediate: boolean): number {
+  if (a.partner !== b.partner) return a.partner - b.partner;
+  if (avoidImmediate && a.immediate !== b.immediate) return a.immediate - b.immediate;
+  return a.opponent - b.opponent;
+}
+
+function gamesFromCourts(courts: readonly CourtTeams[], initialScore: number): Game[] {
+  return courts.map((court, index) => ({
+    id: newId(),
+    court: index + 1,
+    teamA: { playerIds: court.teamA, score: initialScore },
+    teamB: { playerIds: court.teamB, score: initialScore },
+    recorded: false,
+  }));
+}
+
+function courtsFromOrder(ids: readonly PlayerId[]): CourtTeams[] {
+  const courts: CourtTeams[] = [];
+  for (let c = 0; c < ids.length / 4; c++) {
+    const base = c * 4;
+    courts.push({
+      teamA: [ids[base]!, ids[base + 1]!],
+      teamB: [ids[base + 2]!, ids[base + 3]!],
+    });
+  }
+  return courts;
+}
+
+/**
+ * Visit every unordered perfect matching. The `pairs` array is reused
+ * across visits; callbacks must copy ids before returning.
+ */
+function eachMatching(ids: readonly PlayerId[], visit: (pairs: Pair[]) => void): void {
+  const used = new Array<boolean>(ids.length).fill(false);
+  const pairs: Pair[] = [];
+  const rec = (start: number): void => {
+    if (pairs.length * 2 === ids.length) {
+      visit(pairs);
+      return;
+    }
+    let i = start;
+    while (used[i]) i += 1;
+    used[i] = true;
+    for (let j = i + 1; j < ids.length; j++) {
+      if (used[j]) continue;
+      used[j] = true;
+      pairs.push([ids[i]!, ids[j]!]);
+      rec(i + 1);
+      pairs.pop();
+      used[j] = false;
+    }
+    used[i] = false;
+  };
+  rec(0);
+}
+
+/** Visit every way to seat a list of pairs onto courts (two pairs per court). */
+function eachCourtPartition(pairs: readonly Pair[], visit: (courts: CourtTeams[]) => void): void {
+  const used = new Array<boolean>(pairs.length).fill(false);
+  const courts: CourtTeams[] = [];
+  const rec = (): void => {
+    if (courts.length * 2 === pairs.length) {
+      visit(
+        courts.map((court) => ({
+          teamA: [court.teamA[0], court.teamA[1]],
+          teamB: [court.teamB[0], court.teamB[1]],
+        })),
+      );
+      return;
+    }
+    let i = 0;
+    while (used[i]) i += 1;
+    used[i] = true;
+    for (let j = i + 1; j < pairs.length; j++) {
+      if (used[j]) continue;
+      used[j] = true;
+      courts.push({ teamA: pairs[i]!, teamB: pairs[j]! });
+      rec();
+      courts.pop();
+      used[j] = false;
+    }
+    used[i] = false;
+  };
+  rec();
+}
+
+function makePicker(
+  random: Random,
+  avoidImmediate: boolean,
+  history: DrawHistory,
+  previousPairs: ReadonlySet<string>,
+): { consider: (courts: CourtTeams[]) => void; result: () => CourtTeams[] | null } {
+  let best: CourtTeams[] | null = null;
+  let bestScore: DrawScore | null = null;
+  let ties = 0;
+  return {
+    consider(courts) {
+      const score = scoreLayout(courts, history, previousPairs);
+      if (!best || !bestScore || compareScores(score, bestScore, avoidImmediate) < 0) {
+        best = courts;
+        bestScore = score;
+        ties = 1;
+        return;
+      }
+      if (compareScores(score, bestScore, avoidImmediate) === 0) {
+        ties += 1;
+        if (random() < 1 / ties) best = courts;
+      }
+    },
+    result: () => best,
+  };
+}
+
+function greedyMatching(
+  ids: readonly PlayerId[],
+  random: Random,
+  history: DrawHistory,
+  previousPairs: ReadonlySet<string>,
+  avoidImmediate: boolean,
+): Pair[] {
+  const remaining = shuffle(ids, random);
+  const pairs: Pair[] = [];
+  while (remaining.length > 0) {
+    const a = remaining.pop()!;
+    let bestIdx = 0;
+    let bestCost = Number.POSITIVE_INFINITY;
+    let ties = 0;
+    for (let i = 0; i < remaining.length; i++) {
+      const b = remaining[i]!;
+      const key = pairKey(a, b);
+      const cost =
+        (history.partners.get(key) ?? 0) * 1000 + (avoidImmediate && previousPairs.has(key) ? 1 : 0);
+      if (cost < bestCost) {
+        bestCost = cost;
+        bestIdx = i;
+        ties = 1;
+      } else if (cost === bestCost) {
+        ties += 1;
+        if (random() < 1 / ties) bestIdx = i;
+      }
+    }
+    const b = remaining.splice(bestIdx, 1)[0]!;
+    pairs.push([a, b]);
+  }
+  return pairs;
+}
+
+/**
+ * Min-cost teams for the players already chosen to play.
+ * Partner repeats dominate; immediate repeats break ties when the
+ * toggle is on; opponent repeats are the lightest term.
+ * A draw is always returned — repeats are allowed once they are unavoidable.
+ */
+function balancedAmericanoGames(
+  playingIds: readonly PlayerId[],
+  rounds: readonly Round[],
+  avoidImmediate: boolean,
+  initialScore: number,
+  random: Random,
+): Game[] {
+  if (rounds.length === 0) {
+    return chunkInto(shuffle(playingIds, random), playingIds.length / 4, initialScore);
+  }
+
+  const history = drawHistory(rounds);
+  const previousPairs = avoidImmediate
+    ? partnersInLastRound(rounds[rounds.length - 1])
+    : new Set<string>();
+  const picker = makePicker(random, avoidImmediate, history, previousPairs);
+
+  if (playingIds.length <= EXACT_LAYOUT_PLAYERS) {
+    // Partner cost does not depend on which court a pair sits on, so pick
+    // the matching first and only then seat that matching.
+    let bestMatch: Pair[] | null = null;
+    let bestScore: DrawScore | null = null;
+    let ties = 0;
+    eachMatching(playingIds, (pairs) => {
+      const frozen = pairs.map((pair) => [pair[0], pair[1]] as Pair);
+      const score = scorePairs(frozen, history, previousPairs);
+      if (!bestMatch || !bestScore || compareScores(score, bestScore, avoidImmediate) < 0) {
+        bestMatch = frozen;
+        bestScore = score;
+        ties = 1;
+        return;
+      }
+      if (compareScores(score, bestScore, avoidImmediate) === 0) {
+        ties += 1;
+        if (random() < 1 / ties) bestMatch = frozen;
+      }
+    });
+    if (bestMatch) eachCourtPartition(bestMatch, picker.consider);
+  } else {
+    for (let sample = 0; sample < SAMPLE_DRAWS; sample++) {
+      picker.consider(courtsFromOrder(shuffle(playingIds, random)));
+    }
+    for (let sample = 0; sample < SAMPLE_DRAWS; sample++) {
+      const matching = greedyMatching(playingIds, random, history, previousPairs, avoidImmediate);
+      // 10 pairs → 945 court seatings. Larger nights keep one shuffled seating.
+      if (matching.length <= 10) {
+        eachCourtPartition(matching, picker.consider);
+      } else {
+        const ordered = shuffle(matching, random);
+        const courts: CourtTeams[] = [];
+        for (let i = 0; i < ordered.length; i += 2) {
+          courts.push({ teamA: ordered[i]!, teamB: ordered[i + 1]! });
+        }
+        picker.consider(courts);
+      }
+    }
+  }
+
+  const chosen = picker.result();
+  if (!chosen) {
+    return chunkInto(shuffle(playingIds, random), playingIds.length / 4, initialScore);
+  }
+  return gamesFromCourts(chosen, initialScore);
+}
+
+function eachMixLayout(
+  malePairs: readonly Pair[],
+  womenIds: readonly PlayerId[],
+  visit: (courts: CourtTeams[]) => void,
+): void {
+  const orientEvery = (womanPairs: readonly Pair[], assign: (courts: CourtTeams[]) => void) => {
+    const courts = malePairs.length;
+    const total = 1 << courts;
+    for (let mask = 0; mask < total; mask++) {
+      const layout: CourtTeams[] = [];
+      for (let c = 0; c < courts; c++) {
+        const men = malePairs[c]!;
+        const women = womanPairs[c]!;
+        const options = mixedPairings(men[0], men[1], women[0], women[1]);
+        layout.push(options[(mask >> c) & 1]!);
+      }
+      assign(layout);
+    }
+  };
+
+  if (malePairs.length <= EXACT_MIX_COURTS) {
+    eachMatching(womenIds, (livePairs) => {
+      const womanPairs = livePairs.map((pair) => [pair[0], pair[1]] as Pair);
+      const used = new Array<boolean>(womanPairs.length).fill(false);
+      const perm: number[] = [];
+      const assign = (court: number): void => {
+        if (court === malePairs.length) {
+          const ordered = perm.map((index) => womanPairs[index]!);
+          orientEvery(ordered, visit);
+          return;
+        }
+        for (let j = 0; j < womanPairs.length; j++) {
+          if (used[j]) continue;
+          used[j] = true;
+          perm[court] = j;
+          assign(court + 1);
+          used[j] = false;
+        }
+      };
+      assign(0);
+    });
+    return;
+  }
+
+  // Larger nights: men are already a random pairing; sample women the same way.
+  orientEvery(
+    malePairs.map((_, index) => {
+      const base = index * 2;
+      return [womenIds[base]!, womenIds[base + 1]!] as Pair;
+    }),
+    visit,
+  );
+}
+
+/**
+ * Men are shuffled into courts so co-resters are not glued to court 1.
+ * Women and the M+F pairing are then chosen to minimise partner repeats.
+ */
+function balancedMixGames(
+  men: readonly Player[],
+  women: readonly Player[],
+  rounds: readonly Round[],
+  avoidImmediate: boolean,
+  initialScore: number,
+  random: Random,
+): Game[] {
+  const menIds = shuffle(men, random).map((player) => player.id);
+  const malePairs: Pair[] = [];
+  for (let c = 0; c < menIds.length / 2; c++) {
+    malePairs.push([menIds[c * 2]!, menIds[c * 2 + 1]!]);
+  }
+
+  const history = drawHistory(rounds);
+  const previousPairs = avoidImmediate
+    ? partnersInLastRound(rounds[rounds.length - 1])
+    : new Set<string>();
+  const picker = makePicker(random, avoidImmediate, history, previousPairs);
+  const womenIds = women.map((player) => player.id);
+
+  if (malePairs.length <= EXACT_MIX_COURTS) {
+    eachMixLayout(malePairs, womenIds, picker.consider);
+  } else {
+    for (let sample = 0; sample < SAMPLE_DRAWS; sample++) {
+      eachMixLayout(malePairs, shuffle(womenIds, random), picker.consider);
+    }
+  }
+
+  const chosen = picker.result();
+  if (!chosen) {
+    return [];
+  }
+  return gamesFromCourts(chosen, initialScore);
 }
 
 function chunkInto(
@@ -124,8 +515,8 @@ export function generateRound(input: GenerateRoundInput): GenerateRoundResult {
 }
 
 /**
- * Americano / Mix & Match — random fair rotation with most-rested-first
- * player selection (the original Blue Lions generator).
+ * Americano / Mix & Match — most-rested players play next, then teams
+ * are chosen to keep partnership counts as even as the roster allows.
  */
 export function generateAmericanoRound({
   players,
@@ -149,18 +540,14 @@ export function generateAmericanoRound({
   const playingIds = orderedByRests.slice(0, playingCount).map((p) => p.id);
   const restingIds = orderedByRests.slice(playingCount).map((p) => p.id);
 
-  const previousPairs = config.avoidImmediateRepeat
-    ? partnersInLastRound(rounds[rounds.length - 1])
-    : new Set<string>();
-
   const initialScore = Math.floor(config.targetTotal / 2);
-
-  let games: Game[] = chunkInto(shuffle(playingIds, random), courts, initialScore);
-  if (config.avoidImmediateRepeat) {
-    for (let attempt = 0; attempt < 30 && hasImmediateRepeat(games, previousPairs); attempt++) {
-      games = chunkInto(shuffle(playingIds, random), courts, initialScore);
-    }
-  }
+  const games = balancedAmericanoGames(
+    playingIds,
+    rounds,
+    config.avoidImmediateRepeat,
+    initialScore,
+    random,
+  );
 
   return makeRound(rounds, games, restingIds, active, config.tournament);
 }
@@ -273,37 +660,15 @@ export function generateMixAmericanoRound({
   const playingIds = new Set([...pickedMen, ...pickedWomen].map((p) => p.id));
   const restingIds = active.filter((p) => !playingIds.has(p.id)).map((p) => p.id);
 
-  const previousPairs = config.avoidImmediateRepeat
-    ? partnersInLastRound(rounds[rounds.length - 1])
-    : new Set<string>();
   const initialScore = Math.floor(config.targetTotal / 2);
-
-  const games: Game[] = [];
-  for (let c = 0; c < courts; c++) {
-    const m1 = pickedMen[c * 2]!;
-    const m2 = pickedMen[c * 2 + 1]!;
-    const f1 = pickedWomen[c * 2]!;
-    const f2 = pickedWomen[c * 2 + 1]!;
-
-    const options = mixedPairings(m1.id, m2.id, f1.id, f2.id);
-    let chosen = options[0]!;
-    if (config.avoidImmediateRepeat) {
-      const alt = options.find(
-        (o) =>
-          !previousPairs.has(pairKey(o.teamA[0], o.teamA[1])) &&
-          !previousPairs.has(pairKey(o.teamB[0], o.teamB[1])),
-      );
-      if (alt) chosen = alt;
-    }
-
-    games.push({
-      id: newId(),
-      court: c + 1,
-      teamA: { playerIds: chosen.teamA, score: initialScore },
-      teamB: { playerIds: chosen.teamB, score: initialScore },
-      recorded: false,
-    });
-  }
+  const games = balancedMixGames(
+    pickedMen,
+    pickedWomen,
+    rounds,
+    config.avoidImmediateRepeat,
+    initialScore,
+    random,
+  );
 
   return makeRound(rounds, games, restingIds, active, config.tournament);
 }

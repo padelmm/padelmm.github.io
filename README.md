@@ -68,11 +68,12 @@ you're in.
 
 This is where you play.
 
-- **Generate first round / Generate next round** — draws fresh random
-  teams across as many courts as you have players for (4 players per
-  court). Anyone over capacity sits out; the app rotates the rest so the
-  same people don't get parked. The button stays disabled (*"Save all
-  scores to continue"*) until every court in the current round is saved.
+- **Generate first round / Generate next round** — draws teams across as
+  many courts as you have players for (4 players per court). Anyone over
+  capacity sits out; the app rotates rests so playing time stays even,
+  and it spreads partnerships across the night. The button stays disabled
+  (*"Save all scores to continue"*) until every court in the current round
+  is saved.
 - **⟳ Re-shuffle teams** — re-rolls the *current* round's teams. Only
   available before you've saved any scores for the round (otherwise the
   data you've already saved would be lost).

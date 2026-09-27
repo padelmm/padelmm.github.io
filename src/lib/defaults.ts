@@ -39,7 +39,7 @@ export const TOURNAMENT_OPTIONS: ReadonlyArray<{
   {
     id: 'mix-and-match',
     label: 'Americano',
-    description: 'Random fair rotation — new partners each round.',
+    description: 'Fair rotation — balances who rests and who partners.',
   },
   {
     id: 'mexicano',
